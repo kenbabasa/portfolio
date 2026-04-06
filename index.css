@@ -156,8 +156,25 @@ body {
 
 /* Tech Stack */
 .techstack {
-    padding: 16px 0 8px 0;
+    padding: 16px 0;
     border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 0;
+}
+
+.experience {
+    padding: 16px 0;
+    border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 0;
+}
+
+.projects {
+    padding: 16px 0;
+}
+
+.certifications {
+    padding: 16px 0;
+    border-top: none;
+    margin-top: 0;
 }
 
 .techstack-header {
@@ -168,7 +185,28 @@ body {
 }
 
 .techstack h2 {
-    font-size: 18px;
+    font-size: 18px;.techstack {
+    padding: 16px 0;
+    border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 0;
+}
+
+.experience {
+    padding: 16px 0;
+    border-bottom: 1px solid #e8e8e8;
+    margin-bottom: 0;
+}
+
+.projects {
+    padding: 16px 0;
+}
+
+.certifications {
+    padding: 16px 0;
+    border-top: none;
+    margin-top: 0;
+}
+
     font-weight: 700;
     color: black;
 }
