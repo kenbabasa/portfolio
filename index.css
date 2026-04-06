@@ -158,23 +158,6 @@ body {
 .techstack {
     padding: 16px 0;
     border-bottom: 1px solid #e8e8e8;
-    margin-bottom: 0;
-}
-
-.experience {
-    padding: 16px 0;
-    border-bottom: 1px solid #e8e8e8;
-    margin-bottom: 0;
-}
-
-.projects {
-    padding: 16px 0;
-}
-
-.certifications {
-    padding: 16px 0;
-    border-top: none;
-    margin-top: 0;
 }
 
 .techstack-header {
@@ -185,28 +168,7 @@ body {
 }
 
 .techstack h2 {
-    font-size: 18px;.techstack {
-    padding: 16px 0;
-    border-bottom: 1px solid #e8e8e8;
-    margin-bottom: 0;
-}
-
-.experience {
-    padding: 16px 0;
-    border-bottom: 1px solid #e8e8e8;
-    margin-bottom: 0;
-}
-
-.projects {
-    padding: 16px 0;
-}
-
-.certifications {
-    padding: 16px 0;
-    border-top: none;
-    margin-top: 0;
-}
-
+    font-size: 18px;
     font-weight: 700;
     color: black;
 }
@@ -287,16 +249,25 @@ body {
     display: inline-block;
     margin-top: 4px;
     font-size: 12.5px;
-    color: #444;
+    color: #1a1a1a; /* Darker text like the image */
     background: #f5f5f5;
-    padding: 3px 10px;
+    padding: 4px 10px; /* Slightly more padding for the button feel */
     border-radius: 4px;
     font-family: monospace;
+    text-decoration: none; /* Removes the underline */
+    transition: background 0.2s ease;
+}
+
+/* Optional: Add a subtle hover effect so users know it's a link */
+.project-link:hover {
+    background: #e8e8e8;
+    color: #000;
 }
 
 /* Experience */
 .experience {
     padding: 16px 0;
+    border-bottom: 1px solid #e8e8e8;
 }
 
 .experience h2 {
@@ -365,10 +336,9 @@ body {
     color: #999;
 }
 
+/* Certifications */
 .certifications {
     padding: 16px 0;
-    border-top: 1px solid #e8e8e8;
-    margin-top: 0;
 }
 
 .certifications h2 {
@@ -430,6 +400,54 @@ body {
 .cert-year {
     font-size: 13px;
     color: #999;
+}
+
+/* Footer */
+.footer {
+    padding: 24px 0;
+    border-top: 1px solid #e8e8e8;
+    margin-top: 8px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+}
+
+.social-links {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.social-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #333;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.social-item:hover {
+    background: #f5f5f5;
+    border-color: #ccc;
+}
+
+.social-item i {
+    font-size: 16px;
+}
+
+.footer p {
+    font-size: 13px;
+    color: #999;
+    font-weight: 400;
 }
 
 /* Responsive */
