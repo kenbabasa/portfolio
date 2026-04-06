@@ -284,6 +284,7 @@ body {
 .experience {
     padding: 16px 0;
     border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 30px;
 }
 
 .experience h2 {
@@ -354,7 +355,10 @@ body {
 
 /* Certifications */
 .certifications {
-    padding: 16px 0;
+    padding: 16px;
+}
+.cert-header {
+margin-top: 18px;
 }
 
 .certifications h2 {
@@ -427,6 +431,7 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
+    margin-top: 18px;
 }
 
 .view-all:hover {
