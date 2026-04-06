@@ -76,6 +76,22 @@ body {
     align-items: center;
 }
 
+.btn-ghost {
+    display: inline-flex;  /* This makes the whole area clickable */
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;    /* Adjust to match your design */
+    text-decoration: none; /* Removes the underline */
+    color: #1a1a1a;        /* Or whatever color your theme uses */
+    border: 1px solid #e8e8e8;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.btn-ghost:hover {
+    background-color: #f5f5f5;
+}
+
 .btn {
     padding: 10px 20px;
     border-radius: 8px;
@@ -400,6 +416,25 @@ body {
 .cert-year {
     font-size: 13px;
     color: #999;
+}
+
+.view-all {
+    font-size: 13px;
+    color: #666;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.view-all:hover {
+    color: #1a1a1a;
+}
+
+.view-all i {
+    font-size: 10px;
 }
 
 /* Footer */
