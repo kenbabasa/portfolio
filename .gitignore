@@ -1,0 +1,16 @@
+# Secrets & API Keys
+.env
+secret.txt
+credentials.json
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+
+# Editor/IDE Folders
+.vscode/
+.idea/
+
+# Node Modules (if you ever use npm later)
+node_modules/
+dist/
