@@ -78,7 +78,7 @@
                         </div>
                     </div>
                     <div class="stack-group">
-                        <h3>Tools</h3>
+                        <h3>Tools & Frameworks</h3>
                         <div class="stack-tags">
                             <span>Git</span>
                             <span>GitHub</span>
@@ -99,14 +99,10 @@
                             <a href="https://ufplatform.com" target="_blank" class="project-link">ufplatform.com</a>
                         </div>
                         <div class="project-card">
-                            <h3>Project Name</h3>
-                            <p>Short description of the project.</p>
-                            <span class="project-link">projectname.com</span>
-                        </div>
-                        <div class="project-card">
                             <h3>AI Agent</h3>
                             <p>An Agent that generates report based on the uploaded file.</p>
-                            <a href="https://copilotstudio.microsoft.com/environments/0caf1202-3573-e7b8-972a-b48c3c195418/bots/87ba856b-0113-f111-8406-7ced8d3b6718?source=powerAppsMakerPortal_listbot_botslist_name" target="_blank" class="project-link">copilotstudio.microsoft.com</a>
+                            <a href="https://copilotstudio.microsoft.com/environments/0caf1202-3573-e7b8-972a-b48c3c195418/bots/87ba856b-0113-f111-8406-7ced8d3b6718?source=powerAppsMakerPortal_listbot_botslist_name"
+                                target="_blank" class="project-link">copilotstudio.microsoft.com</a>
                         </div>
                         <div class="project-card">
                             <h3>Automation</h3>
@@ -229,6 +225,38 @@
                 </a>
             </div>
             <p>© 2026 Kennie Angelo Estrellon. All rights reserved.</p>
+        </div>
+
+        <div class="chatbot-wrapper">
+            <div class="chat-popup" id="chatPopup">
+                <div class="chat-header">
+                    <div class="header-info">
+                        <img src="kk.jpg" alt="Kennie" class="chat-avatar">
+                        <div>
+                            <h4>Kennie</h4>
+                            <span class="status-dot">Online</span>
+                        </div>
+                    </div>
+                    <button class="close-btn" id="closeChatBtn">&times;</button>
+                </div>
+
+                <div class="chat-messages" id="chatMessages">
+                    <div class="message bot">
+                        Hi there! Thanks for visiting my website. Feel free to ask me anything about programming, web development, or anything else! Let me know how I can help!
+                    </div>
+                </div>
+
+                <div class="chat-input-area">
+                    <input type="text" id="userInput" placeholder="Type a message..." maxlength="1000">
+                    <button id="sendBtn"><i class="fas fa-arrow-right"></i></button>
+                    <div class="char-count"><span id="charCount">0</span>/1000</div>
+                </div>
+            </div>
+
+            <button class="chat-trigger" id="chatTrigger">
+                <i class="fas fa-comment-alt"></i>
+                <span>Chat with Kennie</span>
+            </button>
         </div>
 
     </div>
