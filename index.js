@@ -54,10 +54,22 @@ async function sendMessage() {
 function appendMessage(text, side) {
     const msgDiv = document.createElement('div');
     msgDiv.className = `message ${side}`;
-    msgDiv.textContent = text;
+
+    if (side === 'bot') {
+        // Example of how the bot HTML should be generated in your JS
+        msgDiv.innerHTML = `
+    <img src="ken.jpg" class="msg-avatar">
+    <div class="bot-content">
+        <div class="msg-text">${text}</div>
+    </div>
+`;
+    } else {
+        msgDiv.innerHTML = `<div class="msg-text">${text}</div>`;
+    }
+
     chatMessages.appendChild(msgDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    return msgDiv;
+    return msgDiv.querySelector('.msg-text') || msgDiv;
 }
 
 sendBtn.addEventListener('click', sendMessage);

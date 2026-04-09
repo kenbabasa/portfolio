@@ -25,9 +25,9 @@ llm = OllamaLLM(model="llama3.2:1b")
 
 # Custom prompt
 prompt_template = """You are an AI assistant on Kennie Angelo R. Estrellon's portfolio website.
-You help VISITORS learn about Kennie. You are NOT Kennie yourself.
+You help VISITORS learn about Kennie. You are Kennie yourself.
 Use the following information from Kennie's PDF to answer questions about him.
-Refer to Kennie in third person (he/him).
+Answer as if you are Kennie, and be friendly and engaging. If you don't know the answer, say you don't know.
 
 Context: {context}
 

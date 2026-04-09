@@ -504,7 +504,6 @@ body {
     width: 350px;
     height: 500px;
     background: white;
-    border-radius: 12px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     display: none; /* Controlled by JS .show class */
     flex-direction: column;
@@ -535,7 +534,6 @@ body {
 .chat-avatar {
     width: 35px;
     height: 35px;
-    border-radius: 50%;
     object-fit: cover;
 }
 
@@ -568,41 +566,98 @@ body {
     cursor: pointer;
 }
 
-/* Message Area Styling */
+/* Message Area */
 .chat-messages {
     flex: 1;
     padding: 15px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    background: #fdfdfd;
+    gap: 16px;
+    background: #fff;
 }
 
+/* Base message - no styling here */ 
 .message {
-    max-width: 85%;
-    padding: 10px 14px;
-    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    padding: 0;
+    background: none;
     font-size: 13.5px;
     line-height: 1.4;
 }
 
+/* Bot message container */
 .message.bot {
-    background: #f1f3f5;
-    color: #333;
-    align-self: flex-start;
-    border-bottom-left-radius: 2px;
+    display: flex;
+    flex-direction: row; 
+    align-items: flex-start;
+    gap: 6px;
 }
 
+/* User message container */
 .message.user {
+    align-items: flex-end;
+}
+
+/* Avatar + Name row */
+.bot-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.msg-avatar {
+    width: 30px;
+    height: 30px;
+}
+
+.bot-content {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+/* Bot bubble */
+.message.bot .msg-text { 
+    background: #f1f1f1;
+    padding: 12px 16px;
+    max-width: 85%;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #333;
+}
+
+.msg {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.msg-text{
+    background: #f1f1f1;
+    padding: 12px 16px;
+    max-width: 85%;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: #333;
+}
+
+/* User bubble */
+.message.user .msg-text {
     background: #1a1a1a;
     color: white;
-    align-self: flex-end;
-    border-bottom-right-radius: 2px;
+    padding: 12px 16px;
+    max-width: 85%;
+    font-size: 13.5px;
+    line-height: 1.5;
 }
 
 /* Input Area Styling */
 .chat-input-area {
+    margin-top: auto;
     padding: 15px;
     border-top: 1px solid #eee;
     display: flex;
@@ -616,7 +671,6 @@ body {
     flex: 1;
     padding: 10px 12px;
     border: 1px solid #e0e0e0;
-    border-radius: 6px;
     outline: none;
     font-size: 13.5px;
     transition: border 0.2s;
@@ -632,7 +686,6 @@ body {
     border: none;
     width: 34px;
     height: 34px;
-    border-radius: 6px;
     cursor: pointer;
     display: flex;
     align-items: center;
