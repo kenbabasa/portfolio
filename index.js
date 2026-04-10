@@ -87,3 +87,14 @@ sendBtn.addEventListener('click', sendMessage);
 userInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage();
 });
+
+// Grab the project card link
+const projectChatBtn = document.getElementById('projectChatBtn');
+
+// Use your existing logic to open the chat when the link is clicked
+if (projectChatBtn) {
+    projectChatBtn.addEventListener('click', () => {
+        popup.classList.toggle('show');
+        if (popup.classList.contains('show')) userInput.focus();
+    });
+}
