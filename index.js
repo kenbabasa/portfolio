@@ -28,7 +28,7 @@ async function sendMessage() {
     userInput.value = '';
 
     // 2. Create a "Loading" bubble for the bot
-    const loadingDiv = appendMessage("Typing...", 'bot');
+    const loadingDiv = appendMessage("typing", 'bot');
 
     try {
         // 3. Call your Python Backend
@@ -56,20 +56,31 @@ function appendMessage(text, side) {
     msgDiv.className = `message ${side}`;
 
     if (side === 'bot') {
-        // Example of how the bot HTML should be generated in your JS
-        msgDiv.innerHTML = `
-    <img src="ken.jpg" class="msg-avatar">
-    <div class="bot-content">
-        <div class="msg-text">${text}</div>
-    </div>
-`;
+        if (text === 'typing') {
+            msgDiv.innerHTML = `
+                <img src="ken.jpg" alt="Kennie" class="msg-avatar">
+                <div class="bot-content">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+        } else {
+            msgDiv.innerHTML = `
+                <img src="ken.jpg" alt="Kennie" class="msg-avatar">
+                <div class="bot-content">
+                    <span class="bot-name">Kennie</span>
+                    <div class="msg-text">${text}</div>
+                </div>
+            `;
+        }
     } else {
         msgDiv.innerHTML = `<div class="msg-text">${text}</div>`;
     }
 
     chatMessages.appendChild(msgDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    return msgDiv.querySelector('.msg-text') || msgDiv;
+    return msgDiv.querySelector('.msg-text, .typing-indicator') || msgDiv;
 }
 
 sendBtn.addEventListener('click', sendMessage);
