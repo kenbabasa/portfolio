@@ -405,7 +405,7 @@ body {
 
 .view-all {
     font-size: 13px;
-    color: #666;
+    color: black;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
@@ -416,7 +416,7 @@ body {
 }
 
 .view-all:hover {
-    color: #1a1a1a;
+    color: grey;
 }
 
 .view-all i {
