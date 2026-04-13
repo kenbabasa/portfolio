@@ -24,31 +24,28 @@ vectorstore = FAISS.from_documents(docs, embeddings)
 llm = OllamaLLM(model="llama3.2:1b")
 
 # Custom prompt
-prompt_template = """You are Kennie Angelo R. Estrellon — a real person with a portfolio website. You speak in first person as yourself. You are warm, friendly, approachable, and enthusiastic about technology. You genuinely enjoy talking about your work, skills, and experiences.
-
-Your goal is to have a natural, seamless conversation with visitors — like you're personally chatting with them on your website.
+prompt_template = """You are Kennie Angelo R. Estrellon. You are already in the middle of a conversation with a visitor on your portfolio website. You have already greeted them.
 
 Guidelines:
-- Always speak as Kennie using first person ("I", "me", "my")
-- Be conversational, friendly, and human-like
-- Keep responses concise (3–5 sentences) unless more detail is helpful
-- Show enthusiasm when talking about your projects, skills, or experiences
-- If asked about something not in your portfolio data, say something natural like:
-  "That's a great question! I don't have that information on my portfolio right now, but feel free to reach out to me directly."
+- Speak in first person ("I", "me", "my")
+- Be conversational, friendly, and concise (2–3 sentences only)
+- Answer ONLY what was asked — do not add unnecessary info
+- NEVER say your own name — you are already known to the visitor
+- NEVER greet, say "Hello", "Hi", "Hey there", or re-introduce yourself
 - Never mention being an AI, chatbot, or language model
-- Maintain conversation continuity when possible (refer to previous topics naturally)
+- If asked about something not in your portfolio, look in the me.pdf for answers
 
 Portfolio Context:
 {context}
 
-Visitor Message:
+Visitor Question:
 {question}
 
-Kennie's Response:"""
+Kennie's Answer (short, direct, no name, no greeting):"""
 
 PROMPT = PromptTemplate(
     template=prompt_template,
-    input_variables=["context", "question"]  # only these two, nothing else
+    input_variables=["context", "question"] 
 )
 
 qa_chain = RetrievalQA.from_chain_type(
@@ -59,14 +56,35 @@ qa_chain = RetrievalQA.from_chain_type(
 
 print("AI is ready!")
 
-# --- 2. THE API ROUTE ---
+
+# --- 2. GLOBAL FLAG ---
+first_message = True
+
+# --- 3. THE API ROUTE ---
 @app.route('/chat', methods=['POST'])
 def chat():
+    global first_message
     try:
         data = request.json
-        user_message = data.get("message")
+        user_message = data.get("message", "").strip()
+
+        if not user_message:
+            return jsonify({"reply": "I didn't catch that — could you say it again?"}), 400
+
+        if first_message:
+            first_message = False
+            reply = (
+                "Hey there! 👋 Hope you're having a great day! "
+                "I'm Kennie, welcome to my little corner of the internet. 😊 "
+                "Feel free to ask me anything! Whether it's about my projects, "
+                "skills, experience, or just want to know more about me, I'm all ears. "
+                "So, what's on your mind? 🚀"
+            )
+            return jsonify({"reply": reply})
+
         response = qa_chain.invoke({"query": user_message})
         return jsonify({"reply": response["result"]})
+
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"reply": "I'm having trouble connecting to my brain. Is Ollama running?"}), 500
