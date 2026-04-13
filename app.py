@@ -14,7 +14,7 @@ CORS(app)
 # --- 1. SETUP AI LOGIC ---
 print("Initializing AI... please wait.")
 
-loader = PyPDFLoader("about me.pdf")
+loader = PyPDFLoader("me.pdf")
 docs = loader.load_and_split()
 
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
