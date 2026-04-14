@@ -13,19 +13,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <link rel="icon" type="image/jpeg" href="ken.jpg">
 
-    <link rel="stylesheet" href="index.css">
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='ken.jpg') }}">
 
-    <script src="index.js" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='index.css') }}">
+    <script src="{{ url_for('static', filename='index.js') }}" defer></script>
+
 </head>
 
 <body>
     <div class="container">
 
         <div class="header">
-            <img src="test.gif" alt="Profile" class="profile-image">
+            <img src="{{ url_for('static', filename='test.gif') }}" alt="Profile" class="profile-image">
             <div class="header-content">
                 <div class="name-row">
                     <h1>Kennie Angelo R. Estrellon</h1>
@@ -242,7 +242,7 @@
             <div class="chat-popup" id="chatPopup">
                 <div class="chat-header">
                     <div class="header-info">
-                        <img src="ken.jpg" alt="Kennie" class="chat-avatar">
+                        <img src="{{ url_for('static', filename='ken.jpg') }}" alt="Kennie" class="chat-avatar">
                         <div>
                             <h4>Chat with Kennie</h4>
                             <span class="status-dot">Online</span>
@@ -253,7 +253,7 @@
 
                 <div class="chat-messages" id="chatMessages">
                     <div class="message bot">
-                        <img src="ken.jpg" alt="Kennie" class="msg-avatar">
+                        <img src="{{ url_for('static', filename='ken.jpg') }}" alt="Kennie" class="msg-avatar">
                         <div class="bot-content">
                             <div class="msg-text">Hi there! Thanks for visiting my website. Feel free to ask me anything
                                 about programming, development, or anything else. Let me know how i can help!</div>

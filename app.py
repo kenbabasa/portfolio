@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
@@ -8,22 +8,26 @@ from langchain_classic.chains import RetrievalQA
 from langchain_classic.prompts import PromptTemplate
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
 
 # --- 1. SETUP AI LOGIC ---
 print("Initializing AI... please wait.")
 
-loader = PyPDFLoader("me.pdf")
+# Ensure the path to your PDF is correct
+pdf_path = "me.pdf"
+if not os.path.exists(pdf_path):
+    print(f"Error: {pdf_path} not found in the root directory!")
+
+loader = PyPDFLoader(pdf_path)
 docs = loader.load_and_split()
 
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-
 vectorstore = FAISS.from_documents(docs, embeddings)
 
-llm = OllamaLLM(model="llama3.2:1b")
+# Use the specific model you pulled in your .bat file
+llm = OllamaLLM(model="llama3.2:1b-instruct-q4_K_M")
 
-# Custom prompt
 prompt_template = """You are Kennie Angelo R. Estrellon. You are already in the middle of a conversation with a visitor on your portfolio website. You have already greeted them.
 
 Guidelines:
@@ -56,11 +60,17 @@ qa_chain = RetrievalQA.from_chain_type(
 
 print("AI is ready!")
 
-
 # --- 2. GLOBAL FLAG ---
 first_message = True
 
-# --- 3. THE API ROUTE ---
+# --- 3. ROUTES ---
+
+# THIS IS THE MISSING PART THAT FIXES THE 404 ERROR
+@app.route('/')
+def home():
+    """Serves the main portfolio page."""
+    return render_template('index.html')
+
 @app.route('/chat', methods=['POST'])
 def chat():
     global first_message
@@ -71,6 +81,7 @@ def chat():
         if not user_message:
             return jsonify({"reply": "I didn't catch that — could you say it again?"}), 400
 
+        # Handling the first interaction
         if first_message:
             first_message = False
             reply = (
@@ -82,6 +93,7 @@ def chat():
             )
             return jsonify({"reply": reply})
 
+        # Process message with RAG
         response = qa_chain.invoke({"query": user_message})
         return jsonify({"reply": response["result"]})
 
@@ -90,4 +102,5 @@ def chat():
         return jsonify({"reply": "I'm having trouble connecting to my brain. Is Ollama running?"}), 500
 
 if __name__ == '__main__':
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    # host='0.0.0.0' allows access from your phone!
+    app.run(host='0.0.0.0', port=5000, debug=True)
