@@ -1,5 +1,0 @@
-ollama pull llama3.2:1b 
-
-ollama pull llama3.2:1b-instruct-q4_K_M
-
-python app.py

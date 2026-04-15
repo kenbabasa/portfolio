@@ -100,7 +100,4 @@ def chat():
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"reply": "I'm having trouble connecting to my brain. Is Ollama running?"}), 500
-
-if __name__ == '__main__':
-    # host='0.0.0.0' allows access from your phone!
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    

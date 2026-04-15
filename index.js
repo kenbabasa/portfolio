@@ -58,7 +58,7 @@ function appendMessage(text, side) {
     if (side === 'bot') {
         if (text === 'typing') {
             msgDiv.innerHTML = `
-                <img src="/static/ken.jpg" alt="Kennie" class="msg-avatar">
+                <img src="ken.jpg" alt="Kennie" class="msg-avatar">
                 <div class="bot-content">
                     <div class="typing-indicator">
                         <span></span><span></span><span></span>
