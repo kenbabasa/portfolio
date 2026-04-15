@@ -1,32 +1,125 @@
-        .cert-page {
-            max-width: 700px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
+body {
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    background-color: #ffffff;
+    color: #1a1a1a;
+    line-height: 1.6;
+    margin: 0;
+}
 
-        .cert-page-header {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 2.5rem;
-        }
+.cert-page {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
 
-        .back-link {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 14px;
-            color: #666;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
+.cert-page-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+}
 
-        .back-link:hover {
-            color: #111;
-        }
+.back-link {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+    color: black;
+    text-decoration: none;
+    transition: color 0.2s;
+}
 
-        .cert-page-title {
-            font-size: 24px;
-            font-weight: 700;
-            color: #111;
-        }
+.cert-page-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #111;
+}
+
+/* Grid Layout */
+.cert-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+/* Card Styling */
+.cert-item {
+    padding: 2rem;
+    border: 1px solid #f0f0f0;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cert-item:hover {
+    transform: translateY(-3px);
+    border-color: #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    background-color: #fafafa;
+}
+
+.cert-item h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem 0;
+    color: #111;
+}
+
+.cert-meta {
+    font-size: 14px;
+    color: #666;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Modal (Popup) Styling */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.8);
+    align-items: center;     
+    justify-content: center; 
+    /* Changed from none to auto so the click event works */
+    pointer-events: auto; 
+    cursor: pointer; /* Optional: shows the user they can click to exit */
+}
+
+.modal-content {
+    max-width: 90%;
+    max-height: 80%;
+    border-radius: 4px;
+    animation: zoomIn 0.3s ease;
+    /* Keeps the image from closing the modal if you click the image itself */
+    cursor: default; 
+}
+
+@keyframes zoomIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.close-btn {
+    position: absolute;
+    top: 20px;
+    right: 35px;
+    color: #fff;
+    font-size: 40px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+/* Responsive: Stack on mobile */
+@media (max-width: 600px) {
+    .cert-list {
+        grid-template-columns: 1fr;
+    }
+}

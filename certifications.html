@@ -6,19 +6,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>All Certifications | Kennie Angelo R. Estrellon</title>
 
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
-
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="stylesheet" href="certifications.css">
+    <link rel="icon" type="image/jpeg" href="ken.jpg">
+
+    <link rel="stylesheet" href='certifications.css'>
+    <script src="certifications.js" defer></script>
 </head>
 
 <body>
-    <div class="cert-page">
 
+    <div class="cert-page">
         <div class="cert-page-header">
             <a href="index.html" class="back-link">
                 <i class="fas fa-arrow-left"></i>
@@ -30,8 +29,7 @@
         <div class="certifications">
             <div class="cert-list">
 
-                <div class="cert-item">
-                    <div class="cert-dot"></div>
+                <div class="cert-item" onclick="openModal('ITS certificate.jpg')">
                     <div class="cert-details">
                         <h3>IT Specialist Examination</h3>
                         <div class="cert-meta">
@@ -41,8 +39,7 @@
                     </div>
                 </div>
 
-                <div class="cert-item">
-                    <div class="cert-dot"></div>
+                <div class="cert-item" onclick="openModal('Hour of Code Certificate.jpg')">
                     <div class="cert-details">
                         <h3>The Hour of Code</h3>
                         <div class="cert-meta">
@@ -52,8 +49,7 @@
                     </div>
                 </div>
 
-                <div class="cert-item">
-                    <div class="cert-dot"></div>
+                <div class="cert-item" onclick="openModal('Gateway to Quantum Computing.jpg')">
                     <div class="cert-details">
                         <h3>Gateway to Quantum Computing</h3>
                         <div class="cert-meta">
@@ -63,8 +59,7 @@
                     </div>
                 </div>
 
-                <div class="cert-item">
-                    <div class="cert-dot"></div>
+                <div class="cert-item" onclick="openModal('AI Fluency.jpg')">
                     <div class="cert-details">
                         <h3>AI Fluency</h3>
                         <div class="cert-meta">
@@ -74,8 +69,7 @@
                     </div>
                 </div>
 
-                <div class="cert-item">
-                    <div class="cert-dot"></div>
+                <div class="cert-item" onclick="openModal('Create a canvas app in Power Apps.jpg')">
                     <div class="cert-details">
                         <h3>Create a canvas app in Power Apps</h3>
                         <div class="cert-meta">
@@ -87,8 +81,12 @@
 
             </div>
         </div>
-
     </div>
+
+    <div id="certModal" class="modal" onclick="closeModal()">
+        <img class="modal-content" id="fullCertImage" alt="Certificate Preview">
+    </div>
+
 </body>
 
 </html>
