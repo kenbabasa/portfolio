@@ -7,9 +7,9 @@ body {
 }
 
 .techstack-page {
-    max-width: 1000px;
+    max-width: 860px;   /* SAME as index container */
     margin: 0 auto;
-    padding: 2rem 1.5rem;
+    padding: 24px;      /* SAME padding as index */
 }
 
 .techstack-page-header {
