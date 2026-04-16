@@ -9,19 +9,20 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="icon" type="image/jpeg" href="ken.jpg">
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='images/ken.jpg') }}">
 
-    <link rel="stylesheet" href='certifications.css'>
-    <script src="certifications.js" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/certifications.css') }}">
+
+    <script src="{{ url_for('static', filename='js/certifications.js') }}" defer></script>
+
 </head>
 
 <body>
 
     <div class="cert-page">
         <div class="cert-page-header">
-            <a href="index.html" class="back-link">
+            <a href="{{ url_for('home') }}" class="back-link">
                 <i class="fas fa-arrow-left"></i>
-                Back to Home
             </a>
             <h1 class="cert-page-title">All Certifications</h1>
         </div>
@@ -29,7 +30,8 @@
         <div class="certifications">
             <div class="cert-list">
 
-                <div class="cert-item" onclick="openModal('ITS certificate.jpg')">
+                <div class="cert-item" data-image="{{ url_for('static', filename='images/ITS_certificate.jpg') }}"
+                    onclick="openModal(this.dataset.image)">
                     <div class="cert-details">
                         <h3>IT Specialist Examination</h3>
                         <div class="cert-meta">
@@ -83,8 +85,10 @@
         </div>
     </div>
 
-    <div id="certModal" class="modal" onclick="closeModal()">
-        <img class="modal-content" id="fullCertImage" alt="Certificate Preview">
+    <!-- Image Modal -->
+    <div id="imageModal" class="modal">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <img class="modal-content" id="modalImage">
     </div>
 
 </body>

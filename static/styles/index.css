@@ -169,6 +169,8 @@ body {
     font-size: 18px;
     font-weight: 700;
     color: black;
+    margin: 0;
+    line-height: 1;
 }
 
 .stack-group {
@@ -191,10 +193,15 @@ body {
 .stack-tags span {
     padding: 5px 12px;
     font-size: 13.5px;
-    color: #333;
+    color: black;
     font-weight: 400;
     border: 1px solid #e8e8e8;
-    border-radius: 6px;
+}
+
+.stack-tags span:hover {
+    border-color: #bbb;
+    background-color: #fafafa;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .projects {
@@ -328,7 +335,7 @@ body {
 
 .exp-year {
     font-size: 13px;
-    color: #999;
+    color: black;
 }
 
 .certifications {
@@ -340,6 +347,7 @@ body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+    line-height: 1;
 }
 
 .certifications-header h2 {
@@ -400,19 +408,20 @@ body {
 
 .cert-year {
     font-size: 13px;
-    color: #999;
+    color: black;
 }
 
 .view-all {
-    font-size: 13px;
+    font-size: 12px;
     color: black;
     text-decoration: none;
     font-weight: 500;
     transition: color 0.2s;
-    display: flex;
-    align-items: center;
-    gap: 4px;
+    display: flex;       /* Allows internal alignment of text and chevron icon */
+    align-items: center; /* Centers the chevron icon vertically with the text */
+    gap: 4px;            /* Space between text and icon */
     white-space: nowrap;
+    line-height: 1;
 }
 
 .view-all:hover {

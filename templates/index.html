@@ -14,10 +14,11 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-    <link rel="icon" type="image/jpeg" href="ken.jpg">
+    <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='images/ken.jpg') }}">
 
-    <link rel="stylesheet" href="index.css">
-    <script src="index.js" defer></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles/index.css') }}">
+
+    <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
 
 </head>
 
@@ -25,7 +26,7 @@
     <div class="container">
 
         <div class="header">
-            <img src='test.gif' alt="Profile" class="profile-image">
+            <img src="{{ url_for('static', filename='images/test.gif') }}" alt="Profile" class="profile-image">
             <div class="header-content">
                 <div class="name-row">
                     <h1>Kennie Angelo R. Estrellon</h1>
@@ -34,7 +35,7 @@
                     <i class="fas fa-map-marker-alt"></i>
                     Cauayan City, Isabela, Philippines
                 </div>
-                <div class="title">BSCS Student</div>
+                <div class="title">BSCS Student / Aspiring Full-Stack Developer</div>
                 <div class="action-buttons">
                     <button class="btn btn-primary">
                         <i class="fas fa-calendar"></i>
@@ -66,7 +67,7 @@
                 <div class="techstack">
                     <div class="techstack-header">
                         <h2>Tech Stack</h2>
-                        <a href='techstack.html' class="view-all">
+                        <a href="{{ url_for('techstack') }}" class="view-all">
                             View All <i class="fas fa-chevron-right"></i>
                         </a>
                     </div>
@@ -109,7 +110,7 @@
                         </div>
                         <div class="project-card">
                             <h3>AI Agent</h3>
-                            <p>An AI agent that generates report based on the uploaded file.</p>
+                            <p>An agent that generates report based on the uploaded file.</p>
                             <a href="https://copilotstudio.microsoft.com/environments/0caf1202-3573-e7b8-972a-b48c3c195418/bots/87ba856b-0113-f111-8406-7ced8d3b6718?source=powerAppsMakerPortal_listbot_botslist_name"
                                 target="_blank" class="project-link">copilotstudio.microsoft.com</a>
                         </div>
@@ -139,7 +140,7 @@
                                 <h3>Intern</h3>
                                 <div class="exp-meta">
                                     <span>BPR Advisors, INC.</span>
-                                    <span class="exp-year">2026</span>
+                                    <div class="exp-year">2026</div>
                                 </div>
                             </div>
                         </div>
@@ -149,7 +150,7 @@
                                 <h3>Hello World!</h3>
                                 <div class="exp-meta">
                                     <span>Wrote my first line of code</span>
-                                    <span class="exp-year">2022</span>
+                                    <div class="exp-year">2022</div>
                                 </div>
                             </div>
                         </div>
@@ -159,7 +160,7 @@
                 <div class="certifications">
                     <div class="certifications-header">
                         <h2>Certifications</h2>
-                        <a href='certifications.html' class="view-all">
+                        <a href="{{ url_for('certifications') }}" class="view-all">
                             View All <i class="fas fa-chevron-right"></i>
                         </a>
                     </div>
@@ -170,7 +171,7 @@
                                 <h3>IT Specialist Examination</h3>
                                 <div class="cert-meta">
                                     <span>Ceriport</span>
-                                    <span class="cert-year">2024</span>
+                                    <div class="cert-year">2024</div>
                                 </div>
                             </div>
                         </div>
@@ -180,7 +181,7 @@
                                 <h3>The Hour of Code</h3>
                                 <div class="cert-meta">
                                     <span>Code.org</span>
-                                    <span class="cert-year">2024</span>
+                                    <div class="cert-year">2024</div>
                                 </div>
                             </div>
                         </div>
@@ -190,7 +191,7 @@
                                 <h3>Gateway to Quantum Computing</h3>
                                 <div class="cert-meta">
                                     <span>Exploring the Basics</span>
-                                    <span class="cert-year">2024</span>
+                                    <div class="cert-year">2024</div>
                                 </div>
                             </div>
                         </div>
@@ -200,7 +201,7 @@
                                 <h3>AI Fluency</h3>
                                 <div class="cert-meta">
                                     <span>Microsoft Learn</span>
-                                    <span class="cert-year">2026</span>
+                                    <div class="cert-year">2026</div>
                                 </div>
                             </div>
                         </div>
@@ -210,7 +211,7 @@
                                 <h3>Create a canvas app in Power Apps</h3>
                                 <div class="cert-meta">
                                     <span>Microsoft Learn</span>
-                                    <span class="cert-year">2026</span>
+                                    <div class="cert-year">2026</div>
                                 </div>
                             </div>
                         </div>
@@ -223,7 +224,7 @@
             <div class="chat-popup" id="chatPopup">
                 <div class="chat-header">
                     <div class="header-info">
-                        <img src='ken.jpg' alt="Kennie" class="chat-avatar">
+                        <img src="{{ url_for('static', filename='images/ken.jpg') }}" alt="Kennie" class="chat-avatar">
                         <div>
                             <h4>Chat with Kennie</h4>
                             <span class="status-dot">Online</span>
@@ -234,7 +235,7 @@
 
                 <div class="chat-messages" id="chatMessages">
                     <div class="message bot">
-                        <img src='ken.jpg' alt="Kennie" class="msg-avatar">
+                        <img src="{{ url_for('static', filename='images/ken.jpg') }}" alt="Kennie" class="msg-avatar">
                         <div class="bot-content">
                             <div class="msg-text">Hi there! Thanks for visiting my website. Feel free to ask me anything
                                 about programming, development, or anything else. Let me know how i can help!</div>

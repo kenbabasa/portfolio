@@ -14,7 +14,6 @@ CORS(app)
 # --- 1. SETUP AI LOGIC ---
 print("Initializing AI... please wait.")
 
-# Ensure the path to your PDF is correct
 pdf_path = "me.pdf"
 if not os.path.exists(pdf_path):
     print(f"Error: {pdf_path} not found in the root directory!")
@@ -25,7 +24,6 @@ docs = loader.load_and_split()
 embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 vectorstore = FAISS.from_documents(docs, embeddings)
 
-# Use the specific model you pulled in your .bat file
 llm = OllamaLLM(model="llama3.2:1b-instruct-q4_K_M")
 
 prompt_template = """You are Kennie Angelo R. Estrellon. You are already in the middle of a conversation with a visitor on your portfolio website. You have already greeted them.
@@ -65,11 +63,18 @@ first_message = True
 
 # --- 3. ROUTES ---
 
-# THIS IS THE MISSING PART THAT FIXES THE 404 ERROR
 @app.route('/')
 def home():
     """Serves the main portfolio page."""
     return render_template('index.html')
+
+@app.route('/techstack')
+def techstack():
+    return render_template('techstack.html')
+
+@app.route('/certifications')
+def certifications():
+    return render_template('certifications.html')
 
 @app.route('/chat', methods=['POST'])
 def chat():
@@ -81,7 +86,6 @@ def chat():
         if not user_message:
             return jsonify({"reply": "I didn't catch that — could you say it again?"}), 400
 
-        # Handling the first interaction
         if first_message:
             first_message = False
             reply = (
@@ -93,11 +97,13 @@ def chat():
             )
             return jsonify({"reply": reply})
 
-        # Process message with RAG
         response = qa_chain.invoke({"query": user_message})
         return jsonify({"reply": response["result"]})
 
     except Exception as e:
         print(f"Error: {e}")
         return jsonify({"reply": "I'm having trouble connecting to my brain. Is Ollama running?"}), 500
-    
+
+# --- 4. RUN APP ---
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=False)

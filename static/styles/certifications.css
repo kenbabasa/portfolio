@@ -15,7 +15,7 @@ body {
 .cert-page-header {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 1rem; 
     margin-bottom: 2.5rem;
 }
 
@@ -46,8 +46,8 @@ body {
 .cert-item {
     padding: 2rem;
     border: 1px solid #f0f0f0;
-    border-radius: 4px;
     background-color: #fff;
+    border-color: black;
     cursor: pointer;
     display: flex;
     flex-direction: column;
@@ -74,6 +74,10 @@ body {
     color: #666;
     display: flex;
     justify-content: space-between;
+}
+
+.cert-year {
+    color: black;
 }
 
 /* Modal (Popup) Styling */

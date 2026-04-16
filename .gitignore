@@ -5,13 +5,8 @@ venv/
 ollama/
 OllamaSetup.exe
 
-# AI/ML cached files
-vectorstore/
-*.faiss
-*.pkl
-
 # PDF (optional - remove this line if you want to include your PDF)
-about me.pdf
+me.pdf
 
 # Python cache
 __pycache__/
