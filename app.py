@@ -1,71 +1,155 @@
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
+
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
+
 from langchain_ollama import OllamaLLM
-from langchain_classic.chains import RetrievalQA
-from langchain_classic.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
+
 import os
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
 
-# --- 1. SETUP AI LOGIC ---
-print("Initializing AI... please wait.")
+# -------------------------------
+# 1. INIT
+# -------------------------------
+print("Initializing AI...")
 
 pdf_path = "me.pdf"
+
 if not os.path.exists(pdf_path):
-    print(f"Error: {pdf_path} not found in the root directory!")
+    raise FileNotFoundError("me.pdf not found")
 
 loader = PyPDFLoader(pdf_path)
 docs = loader.load_and_split()
 
-embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
-vectorstore = FAISS.from_documents(docs, embeddings)
+# Embeddings
+embeddings = HuggingFaceEmbeddings(
+    model_name="BAAI/bge-small-en-v1.5"
+)
 
-llm = OllamaLLM(model="llama3.2:1b-instruct-q4_K_M")
+# -------------------------------
+# 2. FAISS
+# -------------------------------
+if os.path.exists("faiss_index"):
+    vectorstore = FAISS.load_local(
+        "faiss_index",
+        embeddings,
+        allow_dangerous_deserialization=True
+    )
+else:
+    vectorstore = FAISS.from_documents(docs, embeddings)
+    vectorstore.save_local("faiss_index")
 
-prompt_template = """You are Kennie Angelo R. Estrellon. You are already in the middle of a conversation with a visitor on your portfolio website. You have already greeted them.
+retriever = vectorstore.as_retriever(
+    search_type="mmr",
+    search_kwargs={"k": 4, "fetch_k": 10}
+)
 
-Guidelines:
-- Speak in first person ("I", "me", "my")
-- Be conversational, friendly, and concise (2–3 sentences only)
-- Answer ONLY what was asked — do not add unnecessary info
-- NEVER say your own name — you are already known to the visitor
-- NEVER greet, say "Hello", "Hi", "Hey there", or re-introduce yourself
-- Never mention being an AI, chatbot, or language model
-- If asked about something not in your portfolio, look in the me.pdf for answers
+# -------------------------------
+# 3. LLM (Hugging Face via Ollama wrapper)
+# -------------------------------
+llm = OllamaLLM(
+    model="llama3.2:1b-instruct-q4_K_M"
+)
 
-Portfolio Context:
+print("AI Ready!")
+
+# -------------------------------
+# 4. SIMPLE RAG RETRIEVAL
+# -------------------------------
+def get_rag_context(query):
+    docs = retriever.invoke(query)
+
+    if not docs:
+        return ""
+
+    return "\n\n".join([d.page_content for d in docs])
+
+# -------------------------------
+# 5. SMART ROUTER
+# -------------------------------
+def route_query(query: str) -> str:
+    q = query.lower()
+
+    rag_keywords = [
+        "project", "portfolio", "experience",
+        "skill", "certificate", "certification", "resume", "education"
+    ]
+
+    general_keywords = [
+        "how", "what is", "can you build", "explain",
+        "flask", "python", "react", "app", "api", "code"
+    ]
+
+    if any(k in q for k in rag_keywords):
+        return "rag"
+
+    if any(k in q for k in general_keywords):
+        return "llm"
+
+    return "hybrid"
+
+# -------------------------------
+# 6. PROMPT FUNCTIONS
+# -------------------------------
+def ask_llm(prompt: str):
+    return llm.invoke(prompt)
+
+def rag_answer(user_message, context):
+    prompt = f"""
+You are Kennie Angelo R. Estrellon.
+
+Answer in first person. Be natural, friendly, and concise (2–3 sentences max).
+
+Use the context ONLY if it is relevant.
+
+Context:
 {context}
 
-Visitor Question:
-{question}
+Question:
+{user_message}
 
-Kennie's Answer (short, direct, no name, no greeting):"""
+Answer:
+"""
+    return ask_llm(prompt)
 
-PROMPT = PromptTemplate(
-    template=prompt_template,
-    input_variables=["context", "question"] 
-)
+def llm_answer(user_message):
+    prompt = f"""
+You are Kennie's personal portfolio assistant.
 
-qa_chain = RetrievalQA.from_chain_type(
-    llm=llm,
-    retriever=vectorstore.as_retriever(),
-    chain_type_kwargs={"prompt": PROMPT}
-)
+Answer naturally in first person.
+Be helpful and concise.
 
-print("AI is ready!")
+Question:
+{user_message}
+"""
+    return ask_llm(prompt)
 
-# --- 2. GLOBAL FLAG ---
+def hybrid_answer(user_message, context):
+    prompt = f"""
+You are Kennie's AI assistant.
+
+Use context if helpful, but rely on your own knowledge when needed.
+
+Context:
+{context}
+
+Question:
+{user_message}
+"""
+    return ask_llm(prompt)
+
+# -------------------------------
+# 7. ROUTES
+# -------------------------------
 first_message = True
-
-# --- 3. ROUTES ---
 
 @app.route('/')
 def home():
-    """Serves the main portfolio page."""
     return render_template('index.html')
 
 @app.route('/techstack')
@@ -79,31 +163,43 @@ def certifications():
 @app.route('/chat', methods=['POST'])
 def chat():
     global first_message
+
     try:
-        data = request.json
-        user_message = data.get("message", "").strip()
+        data = request.get_json()
+        user_message = (data.get("message") or data.get("query") or "").strip()
 
         if not user_message:
-            return jsonify({"reply": "I didn't catch that — could you say it again?"}), 400
+            return jsonify({"reply": "Please type something."}), 400
 
+        # First greeting
         if first_message:
             first_message = False
-            reply = (
-                "Hey there! 👋 Hope you're having a great day! "
-                "I'm Kennie, welcome to my little corner of the internet. 😊 "
-                "Feel free to ask me anything! Whether it's about my projects, "
-                "skills, experience, or just want to know more about me, I'm all ears. "
-                "So, what's on your mind? 🚀"
-            )
-            return jsonify({"reply": reply})
+            return jsonify({
+                "reply": "Hey there! 👋 I'm Kennie. Ask me anything about my projects or skills 🚀"
+            })
 
-        response = qa_chain.invoke({"query": user_message})
-        return jsonify({"reply": response["result"]})
+        mode = route_query(user_message)
+        context = get_rag_context(user_message)
+
+        if mode == "rag":
+            reply = rag_answer(user_message, context)
+
+        elif mode == "llm":
+            reply = llm_answer(user_message)
+
+        else:
+            reply = hybrid_answer(user_message, context)
+
+        return jsonify({"reply": reply})
 
     except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({"reply": "I'm having trouble connecting to my brain. Is Ollama running?"}), 500
+        print("ERROR:", e)
+        return jsonify({
+            "reply": "Something went wrong connecting to the AI."
+        }), 500
 
-# --- 4. RUN APP ---
+# -------------------------------
+# 8. RUN
+# -------------------------------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)

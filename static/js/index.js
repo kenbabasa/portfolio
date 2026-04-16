@@ -58,21 +58,21 @@ function appendMessage(text, side) {
     if (side === 'bot') {
         if (text === 'typing') {
             msgDiv.innerHTML = `
-                <img src="{{ url_for('static', filename='images/ken.jpg') }}" alt="Kennie" class="msg-avatar">
-                <div class="bot-content">
-                    <div class="typing-indicator">
-                        <span></span><span></span><span></span>
-                    </div>
+            <img src="/static/images/ken.jpg" alt="Kennie" class="msg-avatar">
+            <div class="bot-content">
+                <div class="typing-indicator">
+                    <span></span><span></span><span></span>
                 </div>
-            `;
+            </div>
+        `;
         } else {
             msgDiv.innerHTML = `
-                <img src="ken.jpg" alt="Kennie" class="msg-avatar">
-                <div class="bot-content">
-                    <span class="bot-name">Kennie</span>
-                    <div class="msg-text">${text}</div>
-                </div>
-            `;
+            <img src="/static/images/ken.jpg" alt="Kennie" class="msg-avatar">
+            <div class="bot-content">
+                <span class="bot-name">Kennie</span>
+                <div class="msg-text">${text}</div>
+            </div>
+        `;
         }
     } else {
         msgDiv.innerHTML = `<div class="msg-text">${text}</div>`;
