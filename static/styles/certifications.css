@@ -1,22 +1,36 @@
-body {
-    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #ffffff;
-    color: #1a1a1a;
-    line-height: 1.6;
+:root {
+    --bg-color: #ffffff;
+    --text-color: #333333;
+}
+
+/* Dark theme (same as your index system) */
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #f9f9f9;
+}
+
+/* Global */
+html, body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
     margin: 0;
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
 }
 
+/* Page container */
 .cert-page {
-    max-width: 860px;   /* SAME as index container */
+    max-width: 860px;
     margin: 0 auto;
-    padding: 24px;      /* SAME padding as index */
+    padding: 24px;
 }
 
+/* Header */
 .cert-page-header {
     display: flex;
     align-items: center;
-    gap: 1rem; 
-    margin-bottom: 2.5rem; 
+    gap: 1rem;
+    margin-bottom: 2.5rem;
 }
 
 .back-link {
@@ -24,91 +38,81 @@ body {
     align-items: center;
     gap: 6px;
     font-size: 14px;
-    color: black;
+    color: var(--text-color);
     text-decoration: none;
-    transition: color 0.2s;
 }
 
+/* Title */
 .cert-page-title {
     font-size: 24px;
     font-weight: 700;
-    color: #111;
+    color: var(--text-color);
 }
 
-/* Grid Layout */
+/* Grid */
 .cert-list {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     gap: 20px;
 }
 
-/* Card Styling */
+/* Card */
 .cert-item {
     padding: 2rem;
-    border: 1px solid #f0f0f0;
-    background-color: #fff;
-    border-color: black;
-    cursor: pointer;
+    border: 1px solid #e8e8e8;
+    background-color: transparent;
     display: flex;
     flex-direction: column;
     justify-content: center;
     transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
+/* Hover */
 .cert-item:hover {
     transform: translateY(-3px);
-    border-color: #ddd;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    background-color: #fafafa;
+    background-color: var(--bg-color);
 }
 
+/* Text */
 .cert-item h3 {
     font-size: 1.1rem;
     font-weight: 700;
     margin: 0 0 0.5rem 0;
-    color: #111;
+    color: var(--text-color);
 }
 
 .cert-meta {
     font-size: 14px;
-    color: #666;
+    color: var(--text-color);
     display: flex;
     justify-content: space-between;
 }
 
 .cert-year {
-    color: black;
+    color: var(--text-color);
 }
 
-/* Modal (Popup) Styling */
+/* Modal */
 .modal {
-    display: none; 
+    display: none;
     position: fixed;
     z-index: 1000;
     left: 0;
     top: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0,0,0,0.8);
-    align-items: center;     
-    justify-content: center; 
-    /* Changed from none to auto so the click event works */
-    pointer-events: auto; 
-    cursor: pointer; /* Optional: shows the user they can click to exit */
+    background-color: rgba(0,0,0,0.7);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
 }
 
 .modal-content {
     max-width: 90%;
     max-height: 80%;
     border-radius: 4px;
-    animation: zoomIn 0.3s ease;
-    /* Keeps the image from closing the modal if you click the image itself */
-    cursor: default; 
-}
-
-@keyframes zoomIn {
-    from { transform: scale(0.8); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
+    cursor: default;
 }
 
 .close-btn {
@@ -117,11 +121,10 @@ body {
     right: 35px;
     color: #fff;
     font-size: 40px;
-    font-weight: bold;
     cursor: pointer;
 }
 
-/* Responsive: Stack on mobile */
+/* Responsive */
 @media (max-width: 600px) {
     .cert-list {
         grid-template-columns: 1fr;

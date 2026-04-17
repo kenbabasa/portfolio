@@ -4,12 +4,23 @@
     box-sizing: border-box;
 }
 
+:root {
+    --bg-color: #ffffff;
+    --text-color: #333333;
+}
+
+[data-theme="dark"] {
+    --bg-color: #1a1a1a;
+    --text-color: #f9f9f9;
+}
+
 body {
-    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont, 
+    font-family: 'Open Sans', -apple-system, BlinkMacSystemFont,
                  'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-    background-color: #ffffff;
-    color: #1a1a1a;
+    background-color: var(--bg-color);
+    color: var(--text-color);
     line-height: 1.6;
+    transition: background-color 0.3s, color 0.3s;
 }
 
 .container {
@@ -18,6 +29,7 @@ body {
     padding: 24px;
 }
 
+/* ── HEADER ── */
 .header {
     display: flex;
     align-items: flex-start;
@@ -37,11 +49,13 @@ body {
 .header-content {
     flex: 1;
     padding-top: 4px;
+    min-width: 0;
 }
 
 .name-row {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 10px;
     margin-bottom: 6px;
 }
@@ -49,7 +63,7 @@ body {
 .name-row h1 {
     font-size: 26px;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-color);
     letter-spacing: -0.5px;
 }
 
@@ -57,15 +71,13 @@ body {
     display: flex;
     align-items: center;
     gap: 5px;
-    color: black;
     font-size: 13.5px;
-    margin-bottom: 10px;
     font-weight: 450;
+    margin-bottom: 10px;
 }
 
 .title {
     font-size: 15px;
-    color: black;
     font-weight: 450;
     margin-bottom: 13px;
 }
@@ -77,6 +89,52 @@ body {
     align-items: center;
 }
 
+/* ── TOGGLE ── */
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    width: 45px;
+    height: 30px;
+    background-color: #e5e7eb;
+    cursor: pointer;
+    padding: 3px;
+    transition: background-color 0.3s;
+} 
+
+.theme-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.slider {
+    width: 24px;
+    height: 24px;
+    background-color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.25s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+input:checked + .slider {
+    transform: translateX(14px);
+    background-color: white;
+}
+
+[data-theme="dark"] .theme-toggle {
+    background-color: #374151;
+}
+
+.icon {
+    font-size: 13px;
+}
+
+
+/* ── BUTTONS ── */
 .btn {
     padding: 10px 20px;
     border: none;
@@ -95,13 +153,9 @@ body {
     color: #fff;
 }
 
-.btn-primary:hover {
-    background: #333;
-}
-
 .btn-ghost {
     background: transparent;
-    color: #444;
+    color: var(--text-color);
     border: none;
 }
 
@@ -109,6 +163,7 @@ body {
     background: #f5f5f5;
 }
 
+/* ── ABOUT ── */
 .about {
     padding: 16px 0;
     border-bottom: 1px solid #e8e8e8;
@@ -117,16 +172,14 @@ body {
 .about h2 {
     font-size: 18px;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-color);
     margin-bottom: 12px;
 }
 
 .about p {
     font-size: 14.5px;
-    color: black;
     font-weight: 500;
     line-height: 1.75;
-    max-width: 100%;
     text-align: justify;
     margin-bottom: 15px;
 }
@@ -135,6 +188,7 @@ body {
     margin-bottom: 0;
 }
 
+/* ── MAIN LAYOUT ── */
 .main-content {
     display: grid;
     grid-template-columns: 1fr 280px;
@@ -153,6 +207,7 @@ body {
     min-width: 0;
 }
 
+/* ── TECH STACK ── */
 .techstack {
     padding: 16px 0;
     border-bottom: 1px solid #e8e8e8;
@@ -168,7 +223,6 @@ body {
 .techstack h2 {
     font-size: 18px;
     font-weight: 700;
-    color: black;
     margin: 0;
     line-height: 1;
 }
@@ -180,7 +234,6 @@ body {
 .stack-group h3 {
     font-size: 13.5px;
     font-weight: 700;
-    color: black;
     margin-bottom: 6px;
 }
 
@@ -188,12 +241,12 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
+    
 }
 
 .stack-tags span {
     padding: 5px 12px;
     font-size: 13.5px;
-    color: black;
     font-weight: 400;
     border: 1px solid #e8e8e8;
 }
@@ -204,6 +257,7 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
+/* ── PROJECTS ── */
 .projects {
     padding: 16px 0;
 }
@@ -218,7 +272,7 @@ body {
 .projects h2 {
     font-size: 18px;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-color);
 }
 
 .projects-grid {
@@ -228,45 +282,49 @@ body {
 }
 
 .project-card {
-    background: #fff;
+    background: var(--bg-color);
     padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 6px;
     border: 1px solid #e8e8e8;
-    border-radius: 8px;
+    opacity: 0.9;
+    transition: all 0.2s ease;
 }
 
 .project-card h3 {
     font-size: 14.5px;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-color);
 }
 
 .project-card p {
     font-size: 13.5px;
-    color: #666;
+   color: var(--text-color);
     font-weight: 400;
+    opacity: 0.7;
 }
 
 .project-link {
     display: inline-block;
     margin-top: 4px;
     font-size: 12.5px;
-    color: #1a1a1a;
-    background: #f5f5f5;
+    color: var(--text-color);
+    background: transparent;
     padding: 4px 10px;
+    border: 1px solid #e8e8e8;
     border-radius: 4px;
     font-family: monospace;
     text-decoration: none;
-    transition: background 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-.project-link:hover {
-    background: #e8e8e8;
-    color: #000;
+.project-card:hover {
+    transform: translateY(-2px);
+    opacity: 1;
 }
 
+/* ── EXPERIENCE ── */
 .experience {
     padding: 16px 0 20px 0;
     border-bottom: 1px solid #e8e8e8;
@@ -275,7 +333,7 @@ body {
 .experience h2 {
     font-size: 18px;
     font-weight: 700;
-    color: #1a1a1a;
+    color: var(--text-color);
     margin-bottom: 16px;
 }
 
@@ -299,15 +357,19 @@ body {
 .exp-dot {
     width: 14px;
     height: 14px;
-    border: 2px solid #ccc;
+    border: 2px solid var(--text-color);
     border-radius: 3px;
     flex-shrink: 0;
     margin-top: 3px;
+    background: transparent;
+    opacity: 0.35;
+    transition: all 0.2s ease;
 }
 
 .exp-item.active .exp-dot {
-    background: #1a1a1a;
-    border-color: #1a1a1a;
+    background: var(--text-color);
+    border-color: var(--text-color);
+    opacity: 1;
 }
 
 .exp-details {
@@ -317,7 +379,7 @@ body {
 .exp-details h3 {
     font-size: 14.5px;
     font-weight: 700;
-    color: #1a1a1a;
+   color: var(--text-color);
     margin-bottom: 4px;
 }
 
@@ -329,15 +391,15 @@ body {
 
 .exp-meta span {
     font-size: 13px;
-    color: #666;
+    color: var(--text-color);
     font-weight: 400;
 }
 
 .exp-year {
     font-size: 13px;
-    color: black;
 }
 
+/* ── CERTIFICATIONS ── */
 .certifications {
     padding: 20px 0 16px 0;
 }
@@ -353,7 +415,7 @@ body {
 .certifications-header h2 {
     font-size: 18px;
     font-weight: 700;
-    color: #1a1a1a;
+    --text-color: #f9f9f9;
     white-space: nowrap;
 }
 
@@ -374,15 +436,6 @@ body {
     border-bottom: none;
 }
 
-.cert-dot {
-    width: 14px;
-    height: 14px;
-    border-radius: 3px;
-    background: transparent;
-    flex-shrink: 0;
-    margin-top: 3px;
-}
-
 .cert-details {
     flex: 1;
 }
@@ -390,7 +443,7 @@ body {
 .cert-details h3 {
     font-size: 14.5px;
     font-weight: 700;
-    color: #1a1a1a;
+    --text-color: #f9f9f9;
     margin-bottom: 4px;
 }
 
@@ -402,26 +455,26 @@ body {
 
 .cert-meta span {
     font-size: 13px;
-    color: #666;
+    --text-color: #f9f9f9;
     font-weight: 400;
 }
 
 .cert-year {
     font-size: 13px;
-    color: black;
 }
 
+/* ── VIEW ALL LINK ── */
 .view-all {
     font-size: 12px;
-    color: black;
+    color: var(--text-color);
     text-decoration: none;
     font-weight: 500;
-    transition: color 0.2s;
-    display: flex;       /* Allows internal alignment of text and chevron icon */
-    align-items: center; /* Centers the chevron icon vertically with the text */
-    gap: 4px;            /* Space between text and icon */
+    display: flex;
+    align-items: center;
+    gap: 4px;
     white-space: nowrap;
     line-height: 1;
+    transition: color 0.2s;
 }
 
 .view-all:hover {
@@ -432,6 +485,7 @@ body {
     font-size: 10px;
 }
 
+/* ── FOOTER ── */
 .footer {
     padding: 24px 0;
     border-top: 1px solid #e8e8e8;
@@ -445,7 +499,7 @@ body {
 
 .social-links {
     display: flex;
-    gap: 12px;
+    gap: 12px; 
     flex-wrap: wrap;
     justify-content: center;
 }
@@ -456,17 +510,19 @@ body {
     gap: 8px;
     padding: 10px 18px;
     border: 1px solid #e8e8e8;
-    border-radius: 8px;
     text-decoration: none;
-    color: #333;
+    color: var(--text-color);
     font-size: 14px;
     font-weight: 500;
     transition: all 0.2s;
+    opacity: 0.8;
 }
 
 .social-item:hover {
-    background: #f5f5f5;
-    border-color: #ccc;
+    background: var(--text-color);
+    color: var(--bg-color);
+    border-color: var(--text-color);
+    opacity: 1;
 }
 
 .social-item i {
@@ -475,10 +531,11 @@ body {
 
 .footer p {
     font-size: 13px;
-    color: #999;
+    color: var(--text-color);
     font-weight: 400;
 }
 
+/* ── CHATBOT ── */
 .chatbot-wrapper {
     position: fixed;
     bottom: 15px;
@@ -496,7 +553,7 @@ body {
     align-items: center;
     gap: 12px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     transition: all 0.2s ease;
 }
 
@@ -505,7 +562,6 @@ body {
     transform: translateY(-2px);
 }
 
-/* The Chat Window */
 .chat-popup {
     position: absolute;
     bottom: 70px;
@@ -513,7 +569,7 @@ body {
     width: 350px;
     height: 500px;
     background: white;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
     display: none;
     flex-direction: column;
     overflow: hidden;
@@ -524,7 +580,6 @@ body {
     display: flex;
 }
 
-/* Header Section */
 .chat-header {
     background: #fff;
     padding: 10px;
@@ -574,7 +629,6 @@ body {
     cursor: pointer;
 }
 
-/* Message Area */
 .chat-messages {
     flex: 1;
     padding: 15px;
@@ -583,7 +637,7 @@ body {
     flex-direction: column;
     gap: 16px;
     background: #fff;
-     scrollbar-width: none;
+    scrollbar-width: none;
     -ms-overflow-style: none;
 }
 
@@ -591,7 +645,6 @@ body {
     display: none;
 }
 
-/* Base message - no styling here */ 
 .message {
     display: flex;
     flex-direction: column;
@@ -602,24 +655,15 @@ body {
     line-height: 1.4;
 }
 
-/* Bot message container */
 .message.bot {
     display: flex;
-    flex-direction: row; 
+    flex-direction: row;
     align-items: flex-start;
     gap: 6px;
 }
 
-/* User message container */
 .message.user {
     align-items: flex-end;
-}
-
-/* Avatar + Name row */
-.bot-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 .msg-avatar {
@@ -633,8 +677,7 @@ body {
     gap: 4px;
 }
 
-/* Bot bubble */
-.message.bot .msg-text { 
+.message.bot .msg-text {
     background: #f1f1f1;
     padding: 12px 16px;
     max-width: 85%;
@@ -643,7 +686,6 @@ body {
     color: #333;
 }
 
-/* User bubble */
 .message.user .msg-text {
     background: #1a1a1a;
     color: white;
@@ -653,7 +695,6 @@ body {
     line-height: 1.5;
 }
 
-/* Input Area Styling */
 .chat-input-area {
     margin-top: auto;
     padding: 15px;
@@ -661,7 +702,6 @@ body {
     display: flex;
     align-items: center;
     gap: 8px;
-    position: relative;
     background: white;
 }
 
@@ -699,7 +739,6 @@ body {
     display: flex;
     align-items: center;
     gap: 4px;
-    max-width: 85%;
     padding: 12px 16px;
     background: #f1f1f1;
     width: fit-content;
@@ -709,24 +748,19 @@ body {
     width: 8px;
     height: 8px;
     background: #aaa;
-    max-width: 85%;
     display: inline-block;
     animation: bounce 1.2s infinite ease-in-out;
 }
 
-.typing-indicator span:nth-child(2) {
-    animation-delay: 0.2s;
-}
-
-.typing-indicator span:nth-child(3) {
-    animation-delay: 0.4s;
-}
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
 
 @keyframes bounce {
     0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
-    40% { transform: scale(1); opacity: 1; }
+    40%            { transform: scale(1);   opacity: 1;   }
 }
 
+/* ── RESPONSIVE ── */
 @media (max-width: 768px) {
     .main-content {
         grid-template-columns: 1fr;

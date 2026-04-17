@@ -17,7 +17,7 @@ if (closeBtn) {
     closeBtn.addEventListener('click', () => {
         popup.classList.remove('show');
     });
-}
+} 
 
 async function sendMessage() {
     const text = userInput.value.trim();
@@ -98,3 +98,30 @@ if (projectChatBtn) {
         if (popup.classList.contains('show')) userInput.focus();
     });
 }
+
+const checkbox = document.getElementById('theme-checkbox');
+const icon = document.getElementById('theme-icon');
+
+const savedTheme = localStorage.getItem('theme');
+
+if (savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    checkbox.checked = true;
+    icon.textContent = '🌙';
+} else {
+    document.documentElement.removeAttribute('data-theme');
+    checkbox.checked = false;
+    icon.textContent = '☀️';
+}
+
+checkbox.addEventListener('change', () => {
+    if (checkbox.checked) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+        icon.textContent = '🌙';
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+        icon.textContent = '☀️';
+    }
+});

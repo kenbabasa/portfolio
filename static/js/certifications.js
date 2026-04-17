@@ -13,7 +13,7 @@ function openModal(imgSrc) {
     }
 }
 
-function closeModal() {
+function closeModal() { 
     const modal = document.getElementById("imageModal");
 
     if (modal) {
