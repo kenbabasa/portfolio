@@ -74,6 +74,11 @@ html, body {
     gap: 8px;
 }
 
+.stack-tags :hover {
+    transform: translateY(-2px);
+    opacity: 1;
+}
+
 .stack-tags span {
     display: inline-block;
     padding: 6px 14px;
@@ -95,4 +100,16 @@ html, body {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 16px;
+}
+
+.footer {
+    text-align: center;
+    align-items: center;
+    background-color: var(--bg-color);
+}
+
+.footer p {
+    font-size: 13px;
+    color: var(--text-color);
+    font-weight: 400;
 }
