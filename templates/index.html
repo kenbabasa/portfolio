@@ -20,6 +20,39 @@
 
     <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
 
+    <style>
+        /* ── Schedule Modal Theme ── */
+        #scheduleModal input,
+        #scheduleModal select {
+            color-scheme: light;
+        }
+        [data-theme="dark"] #scheduleModal input,
+        [data-theme="dark"] #scheduleModal select {
+            color-scheme: dark;
+        }
+        #scheduleModal label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-color);
+            margin-bottom: 6px;
+            font-weight: 600;
+            opacity: 0.7;
+        }
+
+        #scheduleModal input::placeholder {
+            color: var(--text-color);
+            opacity: 0.4;
+        }
+        #scheduleModal input:focus,
+        #scheduleModal select:focus {
+            border-color: var(--text-color);
+        }
+        #schedNextBtn:hover { opacity: 0.8; }
+        #schedBackBtn:hover { opacity: 1; }
+        .sched-cal-links a:hover { opacity: 0.7; }
+        #scheduleModal .sched-close:hover { opacity: 1; }
+    </style>
+
 </head>
 
 <body>
@@ -43,7 +76,8 @@
                 </div>
                 <div class="title">BSCS Student / Aspiring Full-Stack Developer</div>
                 <div class="action-buttons">
-                    <button class="btn btn-primary">
+                    <!-- FIX: added id="scheduleBtn" -->
+                    <button class="btn btn-primary" id="scheduleBtn">
                         <i class="fas fa-calendar"></i>
                         Schedule a Meeting
                         <i class="fas fa-chevron-right"></i>
@@ -277,7 +311,101 @@
             <p>© 2026 Kennie Angelo Estrellon. All rights reserved.</p>
         </div>
 
+    </div><!-- end .container -->
+
+    <!-- Schedule Modal — outside .container so fixed positioning works correctly -->
+    <div id="scheduleModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; padding:1rem;">
+        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:0; width:100%; max-width:420px; overflow:hidden;">
+
+            <!-- Header -->
+            <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
+                <h2 style="font-size:16px; font-weight:700; color:var(--text-color); margin:0;">Schedule a Meeting</h2>
+                <button id="closeScheduleModal" class="sched-close" style="background:none; border:none; cursor:pointer; font-size:22px; color:var(--text-color); opacity:0.5; line-height:1; padding:2px 6px; transition:opacity 0.2s;">&times;</button>
+            </div>
+
+            <!-- Body -->
+            <div style="padding:1.25rem 1.5rem;">
+
+                <!-- Step 1: Form -->
+                <div id="schedStep1">
+                    <div style="margin-bottom:1rem;">
+                        <label>Your Name</label>
+                        <input type="text" id="schedName" placeholder="e.g. Juan dela Cruz"
+                            style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Your Email</label>
+                        <input type="email" id="schedEmail" placeholder="you@email.com"
+                            style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
+                    </div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem;">
+                        <div>
+                            <label>Date</label>
+                            <input type="date" id="schedDate"
+                                style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
+                        </div>
+                        <div>
+                            <label>Time</label>
+                            <input type="time" id="schedTime" value="10:00"
+                                style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
+                        </div>
+                    </div>
+                    <div style="margin-bottom:1rem;">
+                        <label>Duration</label>
+                        <select id="schedDur"
+                            style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
+                            <option value="30">30 minutes</option>
+                            <option value="60" selected>1 hour</option>
+                            <option value="90">1.5 hours</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom:1.25rem;">
+                        <label>Topic (optional)</label>
+                        <input type="text" id="schedTopic" placeholder="e.g. Portfolio discussion"
+                            style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
+                    </div>
+                    <button id="schedNextBtn"
+                        style="width:100%; padding:11px; background:var(--text-color); color:var(--bg-color); border:none; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:opacity 0.2s;">
+                        Continue &#8594;
+                    </button>
+                </div>
+
+                <!-- Step 2: Calendar links -->
+                <div id="schedStep2" style="display:none;">
+                    <button id="schedBackBtn"
+                        style="background:none; border:none; color:var(--text-color); font-size:13px; cursor:pointer; margin-bottom:12px; padding:0; font-family:inherit; opacity:0.6; transition:opacity 0.2s;">
+                        &#8592; Back
+                    </button>
+                    <div id="schedSummary"
+                        style="background:var(--hover-bg); padding:12px 14px; margin-bottom:1rem; font-size:13px; color:var(--text-color); line-height:1.7; border-radius:0;">
+                    </div>
+                    <p style="font-size:13px; color:var(--text-color); margin-bottom:10px; font-weight:600; opacity:0.7;">Add to your calendar</p>
+                    <div class="sched-cal-links" style="display:flex; flex-direction:column; gap:8px;">
+                        <a id="gcalLink" href="#" target="_blank"
+                            style="display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid var(--border-color); background:var(--hover-bg); color:var(--text-color); font-size:14px; text-decoration:none; transition:opacity 0.2s;">
+                            <span style="width:22px; height:22px; background:#4285F4; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border-radius:3px; flex-shrink:0;">G</span>
+                            <span style="flex:1;">Google Calendar</span>
+                            <span style="opacity:0.4; font-size:12px;">&#8599;</span>
+                        </a>
+                        <a id="icsLink" href="#" download="meeting-kennie.ics"
+                            style="display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid var(--border-color); background:var(--hover-bg); color:var(--text-color); font-size:14px; text-decoration:none; transition:opacity 0.2s;">
+                            <span style="width:22px; height:22px; background:#555; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; border-radius:3px; flex-shrink:0;">&#63743;</span>
+                            <span style="flex:1;">Apple Calendar / iCal</span>
+                            <span style="opacity:0.4; font-size:12px;">&#8595;</span>
+                        </a>
+                        <a id="outlookLink" href="#" target="_blank"
+                            style="display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid var(--border-color); background:var(--hover-bg); color:var(--text-color); font-size:14px; text-decoration:none; transition:opacity 0.2s;">
+                            <span style="width:22px; height:22px; background:#0078D4; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border-radius:3px; flex-shrink:0;">O</span>
+                            <span style="flex:1;">Outlook Calendar</span>
+                            <span style="opacity:0.4; font-size:12px;">&#8599;</span>
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
     </div>
+
 </body>
 
 </html>
