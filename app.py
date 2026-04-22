@@ -217,7 +217,7 @@ def schedule():
         msg = MIMEMultipart()
         msg['From']    = sender
         msg['To']      = receiver
-        msg['Subject'] = f'📅 New Meeting Scheduled: {topic}'
+        msg['Subject'] = f'New Meeting Scheduled: {topic}'
 
         body = f"""
 Someone scheduled a meeting with you!
