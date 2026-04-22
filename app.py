@@ -8,6 +8,10 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_ollama import OllamaLLM
 from langchain_core.prompts import PromptTemplate
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 import os
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -63,10 +67,8 @@ print("AI Ready!")
 # -------------------------------
 def get_rag_context(query):
     docs = retriever.invoke(query)
-
     if not docs:
         return ""
-
     return "\n\n".join([d.page_content for d in docs])
 
 # -------------------------------
@@ -183,10 +185,8 @@ def chat():
 
         if mode == "rag":
             reply = rag_answer(user_message, context)
-
         elif mode == "llm":
             reply = llm_answer(user_message)
-
         else:
             reply = hybrid_answer(user_message, context)
 
@@ -198,8 +198,54 @@ def chat():
             "reply": "Something went wrong connecting to the AI."
         }), 500
 
+@app.route('/schedule', methods=['POST'])
+def schedule():
+    try:
+        data = request.get_json()
+        name     = data.get('name', '')
+        email    = data.get('email', '')
+        date     = data.get('date', '')
+        time     = data.get('time', '')
+        duration = data.get('duration', '')
+        topic    = data.get('topic', 'Meeting with Kennie')
+
+        # ⚠️ REPLACE THESE TWO VALUES:
+        sender   = 'kennieangelo.estrellon_cyn@isu.edu.ph'       # 👈 your Gmail address
+        password = 'acngwawkbbeplcja'     # 👈 Gmail App Password (16 chars)
+        receiver = sender                        # send to yourself
+
+        msg = MIMEMultipart()
+        msg['From']    = sender
+        msg['To']      = receiver
+        msg['Subject'] = f'📅 New Meeting Scheduled: {topic}'
+
+        body = f"""
+Someone scheduled a meeting with you!
+
+Name:     {name}
+Email:    {email}
+Topic:    {topic}
+Date:     {date}
+Time:     {time}
+Duration: {duration} min
+
+Reply to them at: {email}
+        """
+        msg.attach(MIMEText(body, 'plain'))
+
+        with smtplib.SMTP_SSL('smtp.gmail.com', 465) as server:
+            server.login(sender, password)
+            server.sendmail(sender, receiver, msg.as_string())
+
+        print(f"✅ Email sent for meeting with {name}")
+        return jsonify({'status': 'ok'})
+
+    except Exception as e:
+        print("❌ Schedule error:", e)
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
 # -------------------------------
-# 8. RUN
+# 8. RUN  ← always last
 # -------------------------------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
