@@ -11,48 +11,322 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com">
 
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <link rel="icon" type="image/jpeg" href="{{ url_for('static', filename='images/ken.jpg') }}">
-
     <link rel="stylesheet" href="{{ url_for('static', filename='styles/index.css') }}">
-
     <script src="{{ url_for('static', filename='js/index.js') }}" defer></script>
 
     <style>
-        /* ── Schedule Modal Theme ── */
-        #scheduleModal input,
-        #scheduleModal select {
-            color-scheme: light;
+        /* ── SCHEDULE MODAL ── */
+        #scheduleModal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 10000;
+            background: rgba(0,0,0,0.55);
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
         }
-        [data-theme="dark"] #scheduleModal input,
-        [data-theme="dark"] #scheduleModal select {
-            color-scheme: dark;
+        .sched-card {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 780px;
+            max-height: 90vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: row;
         }
-        #scheduleModal label {
-            display: block;
+        /* LEFT PANEL */
+        .sched-left {
+            width: 240px;
+            flex-shrink: 0;
+            padding: 2rem 1.5rem;
+            border-right: 1px solid var(--border-color);
+        }
+        .sched-avatar {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-bottom: 1rem;
+        }
+        .sched-host-name {
             font-size: 13px;
             color: var(--text-color);
-            margin-bottom: 6px;
-            font-weight: 600;
-            opacity: 0.7;
+            opacity: 0.6;
+            margin-bottom: 4px;
         }
-
-        #scheduleModal input::placeholder {
+        .sched-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 1.25rem;
+            line-height: 1.3;
+        }
+        .sched-meta-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-bottom: 10px;
+        }
+        .sched-meta-item i { margin-top: 2px; flex-shrink: 0; font-size: 13px; }
+        /* RIGHT PANEL */
+        .sched-right {
+            flex: 1;
+            padding: 1.75rem 1.5rem;
+            min-width: 0;
+            position: relative;
+        }
+        .sched-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: none;
+            border: none;
+            font-size: 20px;
             color: var(--text-color);
             opacity: 0.4;
+            cursor: pointer;
+            line-height: 1;
+            transition: opacity 0.2s;
         }
-        #scheduleModal input:focus,
-        #scheduleModal select:focus {
+        .sched-close-btn:hover { opacity: 1; }
+        /* STEP TITLES */
+        .sched-step-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 1.25rem;
+        }
+        /* CALENDAR */
+        .cal-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .cal-month { font-size: 14px; font-weight: 700; color: var(--text-color); }
+        .cal-nav-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-color);
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            transition: all 0.15s;
+        }
+        .cal-nav-btn:hover { background: var(--hover-bg); }
+        .cal-grid { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        .cal-grid th {
+            font-size: 11px;
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0.5;
+            text-align: center;
+            padding-bottom: 8px;
+            letter-spacing: 0.05em;
+        }
+        .cal-grid td { text-align: center; padding: 3px; }
+        .cal-day {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: none;
+            font-size: 13px;
+            color: var(--text-color);
+            cursor: pointer;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+        .cal-day:hover:not(:disabled) { background: var(--hover-bg); }
+        .cal-day.today { font-weight: 700; position: relative; }
+        .cal-day.today::after {
+            content: '';
+            position: absolute;
+            bottom: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: var(--text-color);
+            opacity: 0.4;
+        }
+        .cal-day.available { color: var(--text-color); font-weight: 600; }
+        .cal-day.selected {
+            background: var(--text-color) !important;
+            color: var(--bg-color) !important;
+            border-radius: 50%;
+        }
+        .cal-day:disabled { opacity: 0.25; cursor: not-allowed; }
+        .cal-tz {
+            margin-top: 1rem;
+            font-size: 12px;
+            color: var(--text-color);
+            opacity: 0.6;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        /* TIME SLOTS */
+        .time-slots {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 340px;
+            overflow-y: auto;
+            scrollbar-width: none;
+        }
+        .time-slots::-webkit-scrollbar { display: none; }
+        .time-slot-btn {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-color);
+            background: var(--hover-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.15s;
+            font-family: inherit;
+        }
+        .time-slot-btn:hover { background: var(--border-color); }
+        .time-slot-btn.selected {
+            background: var(--text-color);
+            color: var(--bg-color);
             border-color: var(--text-color);
         }
-        #schedNextBtn:hover { opacity: 0.8; }
-        #schedBackBtn:hover { opacity: 1; }
-        .sched-cal-links a:hover { opacity: 0.7; }
-        #scheduleModal .sched-close:hover { opacity: 1; }
+        .sched-back-btn {
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 13px;
+            opacity: 0.6;
+            cursor: pointer;
+            padding: 0;
+            margin-bottom: 1rem;
+            font-family: inherit;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: opacity 0.2s;
+        }
+        .sched-back-btn:hover { opacity: 1; }
+        /* FORM */
+        .sched-form-field { margin-bottom: 1rem; }
+        .sched-form-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-bottom: 6px;
+        }
+        .sched-form-field input,
+        .sched-form-field select {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 14px;
+            outline: none;
+            font-family: inherit;
+            border-radius: 0;
+            transition: border-color 0.2s;
+            color-scheme: light;
+        }
+        [data-theme="dark"] .sched-form-field input,
+        [data-theme="dark"] .sched-form-field select { color-scheme: dark; }
+        .sched-form-field input::placeholder { opacity: 0.4; }
+        .sched-form-field input:focus,
+        .sched-form-field select:focus { border-color: var(--text-color); }
+        .sched-confirm-btn {
+            width: 100%;
+            padding: 11px;
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            margin-top: 0.5rem;
+            transition: opacity 0.2s;
+        }
+        .sched-confirm-btn:hover { opacity: 0.8; }
+        /* CAL LINKS */
+        .cal-links { display: flex; flex-direction: column; gap: 8px; }
+        .cal-link-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            border: 1px solid var(--border-color);
+            background: var(--hover-bg);
+            color: var(--text-color);
+            font-size: 14px;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+        .cal-link-btn:hover { opacity: 0.7; }
+        .cal-link-icon {
+            width: 22px;
+            height: 22px;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            color: #fff;
+            flex-shrink: 0;
+        }
+        .sched-summary-box {
+            background: var(--hover-bg);
+            border: 1px solid var(--border-color);
+            padding: 12px 14px;
+            margin-bottom: 1.25rem;
+            font-size: 13px;
+            color: var(--text-color);
+            line-height: 1.7;
+        }
+        /* Left panel duration select */
+        #schedDur {
+            margin-top: 6px;
+            width: 100%;
+            padding: 7px 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 13px;
+            outline: none;
+            font-family: inherit;
+            border-radius: 0;
+            color-scheme: light;
+        }
+        [data-theme="dark"] #schedDur { color-scheme: dark; }
+        /* RESPONSIVE */
+        @media (max-width: 600px) {
+            .sched-card { flex-direction: column; max-width: 100%; }
+            .sched-left { width: 100%; border-right: none; border-bottom: 1px solid var(--border-color); padding: 1.25rem; }
+            .sched-right { padding: 1.25rem; }
+        }
     </style>
-
 </head>
 
 <body>
@@ -76,7 +350,6 @@
                 </div>
                 <div class="title">BSCS Student / Aspiring Full-Stack Developer</div>
                 <div class="action-buttons">
-                    <!-- FIX: added id="scheduleBtn" -->
                     <button class="btn btn-primary" id="scheduleBtn">
                         <i class="fas fa-calendar"></i>
                         Schedule a Meeting
@@ -103,7 +376,6 @@
 
         <div class="main-content">
             <div class="left-column">
-
                 <div class="techstack">
                     <div class="techstack-header">
                         <h2>Tech Stack</h2>
@@ -113,35 +385,20 @@
                     </div>
                     <div class="stack-group">
                         <h3>Frontend</h3>
-                        <div class="stack-tags">
-                            <span>HTML</span>
-                            <span>CSS</span>
-                            <span>JavaScript</span>
-                        </div>
+                        <div class="stack-tags"><span>HTML</span><span>CSS</span><span>JavaScript</span></div>
                     </div>
                     <div class="stack-group">
                         <h3>Backend</h3>
-                        <div class="stack-tags">
-                            <span>Python</span>
-                            <span>PostgreSQL</span>
-                            <span>MySQL</span>
-                        </div>
+                        <div class="stack-tags"><span>Python</span><span>PostgreSQL</span><span>MySQL</span></div>
                     </div>
                     <div class="stack-group">
                         <h3>Tools & Framework</h3>
-                        <div class="stack-tags">
-                            <span>Git</span>
-                            <span>GitHub</span>
-                            <span>VS Code</span>
-                            <span>Django</span>
-                        </div>
+                        <div class="stack-tags"><span>Git</span><span>GitHub</span><span>VS Code</span><span>Django</span></div>
                     </div>
                 </div>
 
                 <div class="projects">
-                    <div class="projects-header">
-                        <h2>Recent Projects</h2>
-                    </div>
+                    <div class="projects-header"><h2>Recent Projects</h2></div>
                     <div class="projects-grid">
                         <div class="project-card">
                             <h3>Thesis</h3>
@@ -151,14 +408,12 @@
                         <div class="project-card">
                             <h3>AI Agent</h3>
                             <p>An agent that generates report based on the uploaded file.</p>
-                            <a href="https://copilotstudio.microsoft.com/environments/0caf1202-3573-e7b8-972a-b48c3c195418/bots/87ba856b-0113-f111-8406-7ced8d3b6718?source=powerAppsMakerPortal_listbot_botslist_name"
-                                target="_blank" class="project-link">copilotstudio.microsoft.com</a>
+                            <a href="https://copilotstudio.microsoft.com/environments/0caf1202-3573-e7b8-972a-b48c3c195418/bots/87ba856b-0113-f111-8406-7ced8d3b6718?source=powerAppsMakerPortal_listbot_botslist_name" target="_blank" class="project-link">copilotstudio.microsoft.com</a>
                         </div>
                         <div class="project-card">
                             <h3>Automation</h3>
                             <p>Theres a new Email Arrived Reminder.</p>
-                            <a href="https://make.powerautomate.com/environments/0caf1202-3573-e7b8-972a-b48c3c195418/flows/b5bd141c-2b12-32ee-0ce5-a55c5a34c73d?v3=true"
-                                target="_blank" class="project-link">make.powerautomate.com</a>
+                            <a href="https://make.powerautomate.com/environments/0caf1202-3573-e7b8-972a-b48c3c195418/flows/b5bd141c-2b12-32ee-0ce5-a55c5a34c73d?v3=true" target="_blank" class="project-link">make.powerautomate.com</a>
                         </div>
                         <div class="project-card">
                             <h3>Chatbot</h3>
@@ -207,46 +462,31 @@
                         <div class="cert-item">
                             <div class="cert-details">
                                 <h3>IT Specialist Examination</h3>
-                                <div class="cert-meta">
-                                    <span>Ceriport</span>
-                                    <div class="cert-year">2024</div>
-                                </div>
+                                <div class="cert-meta"><span>Ceriport</span><div class="cert-year">2024</div></div>
                             </div>
                         </div>
                         <div class="cert-item">
                             <div class="cert-details">
                                 <h3>The Hour of Code</h3>
-                                <div class="cert-meta">
-                                    <span>Code.org</span>
-                                    <div class="cert-year">2024</div>
-                                </div>
+                                <div class="cert-meta"><span>Code.org</span><div class="cert-year">2024</div></div>
                             </div>
                         </div>
                         <div class="cert-item">
                             <div class="cert-details">
                                 <h3>Gateway to Quantum Computing</h3>
-                                <div class="cert-meta">
-                                    <span>Exploring the Basics</span>
-                                    <div class="cert-year">2024</div>
-                                </div>
+                                <div class="cert-meta"><span>Exploring the Basics</span><div class="cert-year">2024</div></div>
                             </div>
                         </div>
                         <div class="cert-item">
                             <div class="cert-details">
                                 <h3>AI Fluency</h3>
-                                <div class="cert-meta">
-                                    <span>Microsoft Learn</span>
-                                    <div class="cert-year">2026</div>
-                                </div>
+                                <div class="cert-meta"><span>Microsoft Learn</span><div class="cert-year">2026</div></div>
                             </div>
                         </div>
                         <div class="cert-item">
                             <div class="cert-details">
                                 <h3>Create a canvas app in Power Apps</h3>
-                                <div class="cert-meta">
-                                    <span>Microsoft Learn</span>
-                                    <div class="cert-year">2026</div>
-                                </div>
+                                <div class="cert-meta"><span>Microsoft Learn</span><div class="cert-year">2026</div></div>
                             </div>
                         </div>
                     </div>
@@ -266,23 +506,19 @@
                     </div>
                     <button class="close-btn" id="closeChatBtn">&times;</button>
                 </div>
-
                 <div class="chat-messages" id="chatMessages">
                     <div class="message bot">
                         <img src="{{ url_for('static', filename='images/ken.jpg') }}" alt="Kennie" class="msg-avatar">
                         <div class="bot-content">
-                            <div class="msg-text">Hi there! Thanks for visiting my website. Feel free to ask me anything
-                                about programming, development, or anything else. Let me know how i can help!</div>
+                            <div class="msg-text">Hi there! Thanks for visiting my website. Feel free to ask me anything about programming, development, or anything else. Let me know how i can help!</div>
                         </div>
                     </div>
                 </div>
-
                 <div class="chat-input-area">
                     <input type="text" id="userInput" placeholder="Type a message..." maxlength="1000">
                     <button id="sendBtn"><i class="fas fa-arrow-right"></i></button>
                 </div>
             </div>
-
             <button class="chat-trigger" id="chatTrigger">
                 <i class="fas fa-comment-alt"></i>
                 <span>Ask Questions</span>
@@ -291,113 +527,123 @@
 
         <div class="footer">
             <div class="social-links">
-                <a href="https://github.com/" class="social-item" target="_blank">
-                    <i class="fab fa-github"></i>
-                    <span>GitHub</span>
-                </a>
-                <a href="https://linkedin.com/in/" class="social-item" target="_blank">
-                    <i class="fab fa-linkedin"></i>
-                    <span>LinkedIn</span>
-                </a>
-                <a href="https://instagram.com/" class="social-item" target="_blank">
-                    <i class="fab fa-instagram"></i>
-                    <span>Instagram</span>
-                </a>
-                <a href="https://facebook.com/" class="social-item" target="_blank">
-                    <i class="fab fa-facebook"></i>
-                    <span>Facebook</span>
-                </a>
+                <a href="https://github.com/" class="social-item" target="_blank"><i class="fab fa-github"></i><span>GitHub</span></a>
+                <a href="https://linkedin.com/in/" class="social-item" target="_blank"><i class="fab fa-linkedin"></i><span>LinkedIn</span></a>
+                <a href="https://instagram.com/" class="social-item" target="_blank"><i class="fab fa-instagram"></i><span>Instagram</span></a>
+                <a href="https://facebook.com/" class="social-item" target="_blank"><i class="fab fa-facebook"></i><span>Facebook</span></a>
             </div>
             <p>© 2026 Kennie Angelo Estrellon. All rights reserved.</p>
         </div>
 
     </div><!-- end .container -->
 
-    <!-- Schedule Modal — outside .container so fixed positioning works correctly -->
-    <div id="scheduleModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:10000; background:rgba(0,0,0,0.55); align-items:center; justify-content:center; padding:1rem;">
-        <div style="background:var(--bg-color); border:1px solid var(--border-color); border-radius:0; width:100%; max-width:420px; overflow:hidden;">
+    <!-- ── SCHEDULE MODAL ── -->
+    <div id="scheduleModal">
+        <div class="sched-card">
 
-            <!-- Header -->
-            <div style="padding:1.25rem 1.5rem; border-bottom:1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-                <h2 style="font-size:16px; font-weight:700; color:var(--text-color); margin:0;">Schedule a Meeting</h2>
-                <button id="closeScheduleModal" class="sched-close" style="background:none; border:none; cursor:pointer; font-size:22px; color:var(--text-color); opacity:0.5; line-height:1; padding:2px 6px; transition:opacity 0.2s;">&times;</button>
+            <!-- LEFT: Host info panel -->
+            <div class="sched-left">
+                <img src="{{ url_for('static', filename='images/ken.jpg') }}" alt="Kennie" class="sched-avatar">
+                <p class="sched-host-name">Kennie Angelo Estrellon</p>
+                <h2 class="sched-title">Schedule a Meeting</h2>
+                <div class="sched-meta-item">
+                    <i class="far fa-clock"></i>
+                    <span id="sched-dur-label">60 min</span>
+                </div>
+                <div class="sched-meta-item">
+                    <i class="far fa-video"></i>
+                    <span>Web conferencing details provided upon confirmation.</span>
+                </div>
+                <div class="sched-meta-item" style="margin-top:1.5rem; opacity:1;">
+                    <i class="far fa-hourglass" style="opacity:0.7; margin-top:2px;"></i>
+                    <span style="opacity:0.7;">Duration</span>
+                </div>
+                <select id="schedDur">
+                    <option value="15">15 min</option>
+                    <option value="30">30 min</option>
+                    <option value="60" selected>60 min</option>
+                    <option value="90">90 min</option>
+                </select>
             </div>
 
-            <!-- Body -->
-            <div style="padding:1.25rem 1.5rem;">
+            <!-- RIGHT: Step panels -->
+            <div class="sched-right">
+                <button class="sched-close-btn" id="closeScheduleModal">&times;</button>
 
-                <!-- Step 1: Form -->
+                <!-- STEP 1: Calendar grid -->
                 <div id="schedStep1">
-                    <div style="margin-bottom:1rem;">
-                        <label>Your Name</label>
-                        <input type="text" id="schedName" placeholder="e.g. Juan dela Cruz"
-                            style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
+                    <p class="sched-step-title">Select a Date &amp; Time</p>
+                    <div class="cal-nav">
+                        <button class="cal-nav-btn" id="calPrev"><i class="fas fa-chevron-left"></i></button>
+                        <span class="cal-month" id="calMonthLabel"></span>
+                        <button class="cal-nav-btn" id="calNext"><i class="fas fa-chevron-right"></i></button>
                     </div>
-                    <div style="margin-bottom:1rem;">
-                        <label>Your Email</label>
-                        <input type="email" id="schedEmail" placeholder="you@email.com"
-                            style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
+                    <table class="cal-grid">
+                        <thead>
+                            <tr><th>SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th>SAT</th></tr>
+                        </thead>
+                        <tbody id="calBody"></tbody>
+                    </table>
+                    <div class="cal-tz">
+                        <i class="fas fa-globe"></i>
+                        <span id="calTzLabel"></span>
                     </div>
-                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:1rem;">
-                        <div>
-                            <label>Date</label>
-                            <input type="date" id="schedDate"
-                                style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
-                        </div>
-                        <div>
-                            <label>Time</label>
-                            <input type="time" id="schedTime" value="10:00"
-                                style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
-                        </div>
-                    </div>
-                    <div style="margin-bottom:1rem;">
-                        <label>Duration</label>
-                        <select id="schedDur"
-                            style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
-                            <option value="30">30 minutes</option>
-                            <option value="60" selected>1 hour</option>
-                            <option value="90">1.5 hours</option>
-                        </select>
-                    </div>
-                    <div style="margin-bottom:1.25rem;">
-                        <label>Topic (optional)</label>
-                        <input type="text" id="schedTopic" placeholder="e.g. Portfolio discussion"
-                            style="width:100%; padding:9px 12px; border:1px solid var(--border-color); background:var(--bg-color); color:var(--text-color); font-size:14px; outline:none; font-family:inherit; border-radius:0; transition:border-color 0.2s;">
-                    </div>
-                    <button id="schedNextBtn"
-                        style="width:100%; padding:11px; background:var(--text-color); color:var(--bg-color); border:none; font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; transition:opacity 0.2s;">
-                        Continue &#8594;
-                    </button>
                 </div>
 
-                <!-- Step 2: Calendar links -->
-                <div id="schedStep2" style="display:none;">
-                    <button id="schedBackBtn"
-                        style="background:none; border:none; color:var(--text-color); font-size:13px; cursor:pointer; margin-bottom:12px; padding:0; font-family:inherit; opacity:0.6; transition:opacity 0.2s;">
-                        &#8592; Back
+                <!-- STEP 1b: Time slot picker -->
+                <div id="schedStep1b" style="display:none;">
+                    <button class="sched-back-btn" id="backToCalendar">
+                        <i class="fas fa-chevron-left"></i> <span id="backToCalLabel"></span>
                     </button>
-                    <div id="schedSummary"
-                        style="background:var(--hover-bg); padding:12px 14px; margin-bottom:1rem; font-size:13px; color:var(--text-color); line-height:1.7; border-radius:0;">
+                    <p class="sched-step-title">Select a Time</p>
+                    <div class="time-slots" id="timeSlots"></div>
+                    <div class="cal-tz" style="margin-top:1rem;">
+                        <i class="fas fa-globe"></i>
+                        <span id="calTzLabel2"></span>
                     </div>
+                </div>
+
+                <!-- STEP 2: Guest info form -->
+                <div id="schedStep2" style="display:none;">
+                    <button class="sched-back-btn" id="backToTime">
+                        <i class="fas fa-chevron-left"></i> Back
+                    </button>
+                    <p class="sched-step-title">Enter Your Details</p>
+                    <div class="sched-form-field">
+                        <label>Your Name *</label>
+                        <input type="text" id="schedName" placeholder="e.g. Juan dela Cruz">
+                    </div>
+                    <div class="sched-form-field">
+                        <label>Your Email *</label>
+                        <input type="email" id="schedEmail" placeholder="you@email.com">
+                    </div>
+                    <div class="sched-form-field">
+                        <label>Topic (optional)</label>
+                        <input type="text" id="schedTopic" placeholder="e.g. Portfolio discussion, collaboration">
+                    </div>
+                    <button class="sched-confirm-btn" id="schedConfirmBtn">Confirm Meeting &#8594;</button>
+                </div>
+
+                <!-- STEP 3: Confirmation + calendar links -->
+                <div id="schedStep3" style="display:none;">
+                    <p class="sched-step-title">&#10003; Meeting Scheduled!</p>
+                    <div class="sched-summary-box" id="schedSummary"></div>
                     <p style="font-size:13px; color:var(--text-color); margin-bottom:10px; font-weight:600; opacity:0.7;">Add to your calendar</p>
-                    <div class="sched-cal-links" style="display:flex; flex-direction:column; gap:8px;">
-                        <a id="gcalLink" href="#" target="_blank"
-                            style="display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid var(--border-color); background:var(--hover-bg); color:var(--text-color); font-size:14px; text-decoration:none; transition:opacity 0.2s;">
-                            <span style="width:22px; height:22px; background:#4285F4; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border-radius:3px; flex-shrink:0;">G</span>
+                    <div class="cal-links">
+                        <a id="gcalLink" href="#" target="_blank" class="cal-link-btn">
+                            <span class="cal-link-icon" style="background:#4285F4;">G</span>
                             <span style="flex:1;">Google Calendar</span>
-                            <span style="opacity:0.4; font-size:12px;">&#8599;</span>
+                            <span style="opacity:0.4;font-size:12px;">&#8599;</span>
                         </a>
-                        <a id="icsLink" href="#" download="meeting-kennie.ics"
-                            style="display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid var(--border-color); background:var(--hover-bg); color:var(--text-color); font-size:14px; text-decoration:none; transition:opacity 0.2s;">
-                            <span style="width:22px; height:22px; background:#555; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; border-radius:3px; flex-shrink:0;">&#63743;</span>
+                        <a id="icsLink" href="#" download="meeting-kennie.ics" class="cal-link-btn">
+                            <span class="cal-link-icon" style="background:#555;">&#63743;</span>
                             <span style="flex:1;">Apple Calendar / iCal</span>
-                            <span style="opacity:0.4; font-size:12px;">&#8595;</span>
+                            <span style="opacity:0.4;font-size:12px;">&#8595;</span>
                         </a>
-                        <a id="outlookLink" href="#" target="_blank"
-                            style="display:flex; align-items:center; gap:10px; padding:11px 14px; border:1px solid var(--border-color); background:var(--hover-bg); color:var(--text-color); font-size:14px; text-decoration:none; transition:opacity 0.2s;">
-                            <span style="width:22px; height:22px; background:#0078D4; color:#fff; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; border-radius:3px; flex-shrink:0;">O</span>
+                        <a id="outlookLink" href="#" target="_blank" class="cal-link-btn">
+                            <span class="cal-link-icon" style="background:#0078D4;">O</span>
                             <span style="flex:1;">Outlook Calendar</span>
-                            <span style="opacity:0.4; font-size:12px;">&#8599;</span>
+                            <span style="opacity:0.4;font-size:12px;">&#8599;</span>
                         </a>
                     </div>
                 </div>
@@ -407,5 +653,4 @@
     </div>
 
 </body>
-
 </html>

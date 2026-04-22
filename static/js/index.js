@@ -111,125 +111,205 @@ checkbox.addEventListener('change', () => {
     }
 });
 
-// ── SCHEDULE MODAL ────────────────────────────────────────────
 (function () {
-    var modal = document.getElementById('scheduleModal');
-    var schedBtn = document.getElementById('scheduleBtn');
-    var closeSchedBtn = document.getElementById('closeScheduleModal');
-    var nextBtn = document.getElementById('schedNextBtn');
-    var backBtn = document.getElementById('schedBackBtn');
-    var step1 = document.getElementById('schedStep1');
-    var step2 = document.getElementById('schedStep2');
+        var modal    = document.getElementById('scheduleModal');
+        var openBtn  = document.getElementById('scheduleBtn');
+        var closeBtn = document.getElementById('closeScheduleModal');
+        var step1    = document.getElementById('schedStep1');
+        var step1b   = document.getElementById('schedStep1b');
+        var step2    = document.getElementById('schedStep2');
+        var step3    = document.getElementById('schedStep3');
 
-    // Set min date to today
-    var today = new Date().toISOString().split('T')[0];
-    document.getElementById('schedDate').min = today;
-    document.getElementById('schedDate').value = today;
+        var curYear, curMonth;
+        var selectedDate = null, selectedTime = null;
 
-    function openModal() {
-        modal.style.display = 'flex';
-        document.body.style.overflow = 'hidden';
-        step1.style.display = 'block';
-        step2.style.display = 'none';
-    }
+        var MONTHS = ['January','February','March','April','May','June',
+                      'July','August','September','October','November','December'];
+        var SLOTS  = ['09:00','09:30','10:00','10:30','11:00','11:30',
+                      '13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30'];
 
-    function closeModal() {
-        modal.style.display = 'none';
-        document.body.style.overflow = 'auto';
-    }
+        // Time zone
+        var tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        var tzTime = new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',timeZoneName:'short'});
+        var tzLabel = tz + ' (' + tzTime + ')';
+        document.getElementById('calTzLabel').textContent  = tzLabel;
+        document.getElementById('calTzLabel2').textContent = tzLabel;
 
-    schedBtn.addEventListener('click', openModal);
-    closeSchedBtn.addEventListener('click', closeModal);
-    modal.addEventListener('click', function (e) {
-        if (e.target === modal) closeModal();
-    });
-
-    backBtn.addEventListener('click', function () {
-        step2.style.display = 'none';
-        step1.style.display = 'block';
-    });
-
-    nextBtn.addEventListener('click', function () {
-        var date = document.getElementById('schedDate').value;
-        var time = document.getElementById('schedTime').value;
-        if (!date || !time) { alert('Please fill in the date and time.'); return; }
-
-        var name = document.getElementById('schedName').value.trim();
-        var email = document.getElementById('schedEmail').value.trim();
-        var dur = document.getElementById('schedDur').value;
-        var topic = document.getElementById('schedTopic').value.trim() || 'Meeting with Kennie';
-
-        function pad(n) { return String(n).padStart(2, '0'); }
-
-        function toGDT(d, t) {
-            return d.replace(/-/g, '') + 'T' + t.replace(':', '') + '00';
+        function showOnly(el) {
+            [step1, step1b, step2, step3].forEach(function(s){ s.style.display = 'none'; });
+            el.style.display = 'block';
         }
 
-        function addMins(d, t, m) {
-            var dt = new Date(d + 'T' + t + ':00');
-            dt.setMinutes(dt.getMinutes() + parseInt(m));
-            return dt.getFullYear() + '' + pad(dt.getMonth() + 1) + '' + pad(dt.getDate()) +
-                'T' + pad(dt.getHours()) + '' + pad(dt.getMinutes()) + '00';
+        function openModal() {
+            var now = new Date();
+            curYear = now.getFullYear();
+            curMonth = now.getMonth();
+            selectedDate = null; selectedTime = null;
+            renderCalendar();
+            showOnly(step1);
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
         }
 
-        function addMinsISO(d, t, m) {
-            var dt = new Date(d + 'T' + t + ':00');
-            dt.setMinutes(dt.getMinutes() + parseInt(m));
-            return dt.toISOString().slice(0, 16);
+        function closeModal() {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
         }
 
-        var dtStart = toGDT(date, time);
-        var dtEnd = addMins(date, time, dur);
-        var dtEndISO = addMinsISO(date, time, dur);
-        var enc = encodeURIComponent;
-        var desc = "Scheduled via Kennie's portfolio." +
-            (name ? ' Guest: ' + name : '') +
-            (email ? ' Email: ' + email : '');
+        openBtn.addEventListener('click', openModal);
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', function(e){ if (e.target === modal) closeModal(); });
 
-        // Google Calendar
-        document.getElementById('gcalLink').href =
-            'https://calendar.google.com/calendar/render?action=TEMPLATE' +
-            '&text=' + enc(topic) +
-            '&dates=' + dtStart + '/' + dtEnd +
-            '&details=' + enc(desc) +
-            '&location=' + enc('To be confirmed');
+        // Render calendar grid
+        function renderCalendar() {
+            document.getElementById('calMonthLabel').textContent = MONTHS[curMonth] + ' ' + curYear;
+            var tbody = document.getElementById('calBody');
+            tbody.innerHTML = '';
+            var today = new Date(); today.setHours(0,0,0,0);
+            var first = new Date(curYear, curMonth, 1).getDay();
+            var days  = new Date(curYear, curMonth + 1, 0).getDate();
+            var cells = [];
+            for (var i = 0; i < first; i++) cells.push(null);
+            for (var d = 1; d <= days; d++) cells.push(d);
+            while (cells.length % 7 !== 0) cells.push(null);
 
-        // Outlook
-        document.getElementById('outlookLink').href =
-            'https://outlook.live.com/calendar/0/deeplink/compose' +
-            '?subject=' + enc(topic) +
-            '&startdt=' + date + 'T' + time + ':00' +
-            '&enddt=' + dtEndISO +
-            '&body=' + enc(desc) +
-            '&path=%2Fcalendar%2Faction%2Fcompose';
+            for (var r = 0; r < cells.length / 7; r++) {
+                var tr = document.createElement('tr');
+                for (var c = 0; c < 7; c++) {
+                    var td = document.createElement('td');
+                    var day = cells[r * 7 + c];
+                    if (day) {
+                        var btn = document.createElement('button');
+                        btn.className = 'cal-day';
+                        btn.textContent = day;
+                        var thisDate = new Date(curYear, curMonth, day);
+                        thisDate.setHours(0,0,0,0);
+                        if (thisDate < today) {
+                            btn.disabled = true;
+                        } else {
+                            btn.classList.add('available');
+                            if (thisDate.getTime() === today.getTime()) btn.classList.add('today');
+                            if (selectedDate &&
+                                selectedDate.getFullYear() === curYear &&
+                                selectedDate.getMonth() === curMonth &&
+                                selectedDate.getDate() === day) btn.classList.add('selected');
+                            (function(y,m,dy){
+                                btn.addEventListener('click', function(){
+                                    selectedDate = new Date(y, m, dy);
+                                    selectedTime = null;
+                                    renderCalendar();
+                                    renderTimeSlots();
+                                    showOnly(step1b);
+                                });
+                            })(curYear, curMonth, day);
+                        }
+                        td.appendChild(btn);
+                    }
+                    tr.appendChild(td);
+                }
+                tbody.appendChild(tr);
+            }
+        }
 
-        // Apple / iCal (.ics download)
-        var ics = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'PRODID:-//Kennie Portfolio//EN',
-            'BEGIN:VEVENT',
-            'DTSTART:' + dtStart,
-            'DTEND:' + dtEnd,
-            'SUMMARY:' + topic,
-            'DESCRIPTION:' + desc,
-            'LOCATION:To be confirmed',
-            'END:VEVENT',
-            'END:VCALENDAR'
-        ].join('\r\n');
-        var blob = new Blob([ics], { type: 'text/calendar' });
-        document.getElementById('icsLink').href = URL.createObjectURL(blob);
+        document.getElementById('calPrev').addEventListener('click', function(){
+            curMonth--; if (curMonth < 0) { curMonth = 11; curYear--; } renderCalendar();
+        });
+        document.getElementById('calNext').addEventListener('click', function(){
+            curMonth++; if (curMonth > 11) { curMonth = 0; curYear++; } renderCalendar();
+        });
 
-        // Summary text
-        var d = new Date(date + 'T' + time + ':00');
-        var dateStr = d.toLocaleDateString('en-PH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-        var timeStr = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' });
-        document.getElementById('schedSummary').innerHTML =
-            '<strong>' + topic + '</strong><br>' +
-            dateStr + ' at ' + timeStr + ' (' + dur + ' min)' +
-            (name ? '<br>Guest: ' + name : '');
+        // Render time slots
+        function renderTimeSlots() {
+            var label = selectedDate.toLocaleDateString('en-PH',{weekday:'long',month:'long',day:'numeric'});
+            document.getElementById('backToCalLabel').textContent = label;
+            var container = document.getElementById('timeSlots');
+            container.innerHTML = '';
+            SLOTS.forEach(function(slot){
+                var btn = document.createElement('button');
+                btn.className = 'time-slot-btn';
+                var parts = slot.split(':'), h = parseInt(parts[0]), mn = parts[1];
+                btn.textContent = (h % 12 || 12) + ':' + mn + ' ' + (h >= 12 ? 'PM' : 'AM');
+                if (selectedTime === slot) btn.classList.add('selected');
+                btn.addEventListener('click', function(){
+                    selectedTime = slot;
+                    renderTimeSlots();
+                    showOnly(step2);
+                });
+                container.appendChild(btn);
+            });
+        }
 
-        step1.style.display = 'none';
-        step2.style.display = 'block';
-    });
-})();
+        document.getElementById('backToCalendar').addEventListener('click', function(){ showOnly(step1); });
+        document.getElementById('backToTime').addEventListener('click', function(){ showOnly(step1b); });
+
+        // Duration label sync
+        document.getElementById('schedDur').addEventListener('change', function(){
+            document.getElementById('sched-dur-label').textContent = this.options[this.selectedIndex].text;
+        });
+
+        // Confirm
+        document.getElementById('schedConfirmBtn').addEventListener('click', function(){
+            var name  = document.getElementById('schedName').value.trim();
+            var email = document.getElementById('schedEmail').value.trim();
+            if (!name)  { alert('Please enter your name.');  return; }
+            if (!email) { alert('Please enter your email.'); return; }
+
+            var topic = document.getElementById('schedTopic').value.trim() || 'Meeting with Kennie';
+            var dur   = document.getElementById('schedDur').value;
+
+            function pad(n){ return String(n).padStart(2,'0'); }
+            var y  = selectedDate.getFullYear();
+            var mo = pad(selectedDate.getMonth() + 1);
+            var dy = pad(selectedDate.getDate());
+            var dateStr = y + '-' + mo + '-' + dy;
+            var dtStart = dateStr.replace(/-/g,'') + 'T' + selectedTime.replace(':','') + '00';
+
+            function addMins(ds,ts,m){
+                var dt = new Date(ds+'T'+ts+':00');
+                dt.setMinutes(dt.getMinutes()+parseInt(m));
+                return dt.getFullYear()+''+pad(dt.getMonth()+1)+''+pad(dt.getDate())+
+                       'T'+pad(dt.getHours())+''+pad(dt.getMinutes())+'00';
+            }
+            function addMinsISO(ds,ts,m){
+                var dt = new Date(ds+'T'+ts+':00');
+                dt.setMinutes(dt.getMinutes()+parseInt(m));
+                return dt.toISOString().slice(0,16);
+            }
+
+            var dtEnd    = addMins(dateStr, selectedTime, dur);
+            var dtEndISO = addMinsISO(dateStr, selectedTime, dur);
+            var enc = encodeURIComponent;
+            var desc = "Scheduled via Kennie's portfolio. Guest: "+name+(email?' ('+email+')':'');
+
+            document.getElementById('gcalLink').href =
+                'https://calendar.google.com/calendar/render?action=TEMPLATE&text='+enc(topic)+
+                '&dates='+dtStart+'/'+dtEnd+'&details='+enc(desc)+'&location='+enc('To be confirmed');
+
+            document.getElementById('outlookLink').href =
+                'https://outlook.live.com/calendar/0/deeplink/compose?subject='+enc(topic)+
+                '&startdt='+dateStr+'T'+selectedTime+':00&enddt='+dtEndISO+
+                '&body='+enc(desc)+'&path=%2Fcalendar%2Faction%2Fcompose';
+
+            var ics = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Kennie Portfolio//EN',
+                'BEGIN:VEVENT','DTSTART:'+dtStart,'DTEND:'+dtEnd,
+                'SUMMARY:'+topic,'DESCRIPTION:'+desc,'LOCATION:To be confirmed',
+                'END:VEVENT','END:VCALENDAR'].join('\r\n');
+            document.getElementById('icsLink').href =
+                URL.createObjectURL(new Blob([ics],{type:'text/calendar'}));
+
+            var h  = parseInt(selectedTime.split(':')[0]);
+            var mn = selectedTime.split(':')[1];
+            var readableDate = selectedDate.toLocaleDateString('en-PH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+            document.getElementById('schedSummary').innerHTML =
+                '<strong>'+topic+'</strong><br>'+
+                readableDate+' at '+(h%12||12)+':'+mn+' '+(h>=12?'PM':'AM')+' ('+dur+' min)<br>'+
+                'Guest: '+name;
+
+            fetch('http://127.0.0.1:5000/schedule',{
+                method:'POST', headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({name:name,email:email,date:dateStr,time:selectedTime,duration:dur,topic:topic})
+            }).catch(function(){});
+
+            showOnly(step3);
+        });
+    })();
