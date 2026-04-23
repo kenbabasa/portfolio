@@ -19,7 +19,7 @@ from datetime import datetime, timedelta
 
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
-
+ 
 # -------------------------------
 # CONFIG  ← update these
 # -------------------------------
