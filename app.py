@@ -23,8 +23,17 @@ CORS(app)
 # -------------------------------
 # CONFIG  ← update these
 # -------------------------------
-OWNER_EMAIL  = 'kennieangelo.estrellon_cyn@isu.edu.ph'
-GMAIL_PASS   = 'acngwawkbbeplcja'          # your 16-char app password
+import os
+from dotenv import load_dotenv
+
+# Load the .env file
+load_dotenv()
+
+# Access the variables
+OWNER_EMAIL = os.getenv("OWNER_EMAIL")
+GMAIL_PASS = os.getenv("GMAIL_PASS")
+
+print(OWNER_EMAIL)  # just to test
 BASE_URL     = 'http://127.0.0.1:5000'     # change to your public URL when deployed
 
 # In-memory store for pending meetings (use a DB in production)
