@@ -17,27 +17,27 @@ import uuid
 import json
 from datetime import datetime, timedelta
 
+from database import (
+    init_db, save_meeting, get_meeting,
+    update_meeting_status, is_slot_available,
+    get_booked_slots, block_date, unblock_date,
+    get_blocked_dates, get_blocked_for_month,
+)
+
 app = Flask(__name__, template_folder='templates', static_folder='static')
 CORS(app)
- 
-# -------------------------------
-# CONFIG  ← update these
-# -------------------------------
-import os
-from dotenv import load_dotenv
 
-# Load the .env file
+# -------------------------------
+# CONFIG
+# -------------------------------
+from dotenv import load_dotenv
 load_dotenv()
 
-# Access the variables
 OWNER_EMAIL = os.getenv("OWNER_EMAIL")
-GMAIL_PASS = os.getenv("GMAIL_PASS")
+GMAIL_PASS  = os.getenv("GMAIL_PASS")
+ADMIN_KEY   = os.getenv("ADMIN_KEY", "lattu123")  # simple admin auth for blocking dates
 
-print(OWNER_EMAIL)  # just to test
-BASE_URL     = 'http://127.0.0.1:5000'     # change to your public URL when deployed
-
-# In-memory store for pending meetings (use a DB in production)
-pending_meetings = {}
+BASE_URL = 'http://127.0.0.1:5000'  # change to your public URL when deployed
 
 # -------------------------------
 # 1. INIT
@@ -45,12 +45,11 @@ pending_meetings = {}
 print("Initializing AI...")
 
 pdf_path = "me.pdf"
-
 if not os.path.exists(pdf_path):
     raise FileNotFoundError("me.pdf not found")
 
 loader = PyPDFLoader(pdf_path)
-docs = loader.load_and_split()
+docs   = loader.load_and_split()
 
 embeddings = HuggingFaceEmbeddings(model_name="BAAI/bge-small-en-v1.5")
 
@@ -68,6 +67,9 @@ retriever = vectorstore.as_retriever(
 
 llm = OllamaLLM(model="llama3.2:1b-instruct-q4_K_M")
 print("AI Ready!")
+
+# Init SQLite database (creates meetings.db automatically on first run)
+init_db()
 
 # -------------------------------
 # 2. RAG / ROUTING
@@ -117,17 +119,11 @@ def send_email(to_addr, subject, html_body, text_body=""):
 
 
 def make_google_meet_link(date_str, time_str, duration, title, attendees):
-    """
-    Generates a Google Meet link via a pre-filled Google Calendar event URL.
-    Real Meet links are created server-side only via Google Calendar API.
-    This opens a calendar event with Meet conference pre-selected — clicking
-    'Save' creates the Meet. For a true auto-generated link you'd need OAuth.
-    """
     def pad(n): return str(n).zfill(2)
-    dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+    dt     = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
     dt_end = dt + timedelta(minutes=int(duration))
-    fmt = lambda d: d.strftime("%Y%m%dT%H%M%S")
-    enc = lambda s: s.replace(" ", "+").replace(",", "%2C").replace(":", "%3A")
+    fmt    = lambda d: d.strftime("%Y%m%dT%H%M%S")
+    enc    = lambda s: s.replace(" ", "+").replace(",", "%2C").replace(":", "%3A")
     attendee_str = "&add=" + "&add=".join(enc(a) for a in attendees)
     return (
         f"https://calendar.google.com/calendar/render?action=TEMPLATE"
@@ -141,11 +137,11 @@ def make_google_meet_link(date_str, time_str, duration, title, attendees):
 
 
 def make_ics(title, date_str, time_str, duration, organizer_email, guest_name, guest_email, meet_url=""):
-    dt = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
+    dt     = datetime.strptime(f"{date_str} {time_str}", "%Y-%m-%d %H:%M")
     dt_end = dt + timedelta(minutes=int(duration))
-    fmt = lambda d: d.strftime("%Y%m%dT%H%M%S")
-    uid = str(uuid.uuid4())
-    desc = f"Meeting scheduled via portfolio.\\nGoogle Meet: {meet_url}" if meet_url else "Meeting scheduled via portfolio."
+    fmt    = lambda d: d.strftime("%Y%m%dT%H%M%S")
+    uid    = str(uuid.uuid4())
+    desc   = f"Meeting scheduled via portfolio.\\nGoogle Meet: {meet_url}" if meet_url else "Meeting scheduled via portfolio."
     return "\r\n".join([
         "BEGIN:VCALENDAR",
         "VERSION:2.0",
@@ -170,8 +166,8 @@ def send_owner_notification(token, meeting):
     confirm_url = f"{BASE_URL}/meeting/confirm/{token}"
     decline_url = f"{BASE_URL}/meeting/decline/{token}"
 
-    h = int(meeting['time'].split(':')[0])
-    mn = meeting['time'].split(':')[1]
+    h           = int(meeting['time'].split(':')[0])
+    mn          = meeting['time'].split(':')[1]
     readable_time = f"{h%12 or 12}:{mn} {'PM' if h>=12 else 'AM'}"
     readable_date = datetime.strptime(meeting['date'], "%Y-%m-%d").strftime("%A, %B %d, %Y")
 
@@ -224,8 +220,8 @@ def send_owner_notification(token, meeting):
 
 
 def send_guest_pending(meeting):
-    h = int(meeting['time'].split(':')[0])
-    mn = meeting['time'].split(':')[1]
+    h             = int(meeting['time'].split(':')[0])
+    mn            = meeting['time'].split(':')[1]
     readable_time = f"{h%12 or 12}:{mn} {'PM' if h>=12 else 'AM'}"
     readable_date = datetime.strptime(meeting['date'], "%Y-%m-%d").strftime("%A, %B %d, %Y")
 
@@ -267,8 +263,8 @@ def send_guest_pending(meeting):
 
 
 def send_confirmed_emails(meeting, meet_url, ics_data):
-    h = int(meeting['time'].split(':')[0])
-    mn = meeting['time'].split(':')[1]
+    h             = int(meeting['time'].split(':')[0])
+    mn            = meeting['time'].split(':')[1]
     readable_time = f"{h%12 or 12}:{mn} {'PM' if h>=12 else 'AM'}"
     readable_date = datetime.strptime(meeting['date'], "%Y-%m-%d").strftime("%A, %B %d, %Y")
 
@@ -318,7 +314,6 @@ def send_confirmed_emails(meeting, meet_url, ics_data):
     </html>
     """
 
-    # Build multipart email with ICS attachment for GUEST
     def build_msg(to_addr, subject):
         msg = MIMEMultipart("mixed")
         msg["From"]    = OWNER_EMAIL
@@ -334,17 +329,15 @@ def send_confirmed_emails(meeting, meet_url, ics_data):
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
         s.login(OWNER_EMAIL, GMAIL_PASS)
-        # send to guest
         guest_msg = build_msg(meeting['email'], subj)
         s.sendmail(OWNER_EMAIL, meeting['email'], guest_msg.as_string())
-        # send to owner
         owner_msg = build_msg(OWNER_EMAIL, subj)
         s.sendmail(OWNER_EMAIL, OWNER_EMAIL, owner_msg.as_string())
 
 
 def send_declined_email(meeting):
-    h = int(meeting['time'].split(':')[0])
-    mn = meeting['time'].split(':')[1]
+    h             = int(meeting['time'].split(':')[0])
+    mn            = meeting['time'].split(':')[1]
     readable_time = f"{h%12 or 12}:{mn} {'PM' if h>=12 else 'AM'}"
     readable_date = datetime.strptime(meeting['date'], "%Y-%m-%d").strftime("%A, %B %d, %Y")
 
@@ -391,6 +384,7 @@ def send_declined_email(meeting):
     """
     send_email(meeting['email'], f"Meeting Request Update — {meeting['topic']}", html)
 
+
 # -------------------------------
 # 4. ROUTES
 # -------------------------------
@@ -412,14 +406,14 @@ def certifications():
 def chat():
     global first_message
     try:
-        data = request.get_json()
+        data         = request.get_json()
         user_message = (data.get("message") or data.get("query") or "").strip()
         if not user_message:
             return jsonify({"reply": "Please type something."}), 400
         if first_message:
             first_message = False
             return jsonify({"reply": "Hey there! 👋 I'm Kennie. Ask me anything about my projects or skills 🚀"})
-        mode = route_query(user_message)
+        mode    = route_query(user_message)
         context = get_rag_context(user_message)
         if mode == "rag":
             reply = rag_answer(user_message, context)
@@ -447,18 +441,28 @@ def schedule():
         if not all([name, email, date, time]):
             return jsonify({'status': 'error', 'message': 'Missing required fields'}), 400
 
-        token = str(uuid.uuid4())
-        pending_meetings[token] = {
+        # Check for conflicts before saving
+        if not is_slot_available(date, time, duration):
+            return jsonify({
+                'status': 'conflict',
+                'message': 'That time slot is no longer available. Please choose a different time.'
+            }), 409
+
+        token   = str(uuid.uuid4())
+        meeting = {
             'name': name, 'email': email, 'date': date,
             'time': time, 'duration': duration, 'topic': topic,
-            'status': 'pending'
         }
 
-        # Notify owner with confirm/decline buttons
-        send_owner_notification(token, pending_meetings[token])
+        saved = save_meeting(token, meeting)
+        if not saved:
+            return jsonify({
+                'status': 'conflict',
+                'message': 'That slot was just taken. Please pick another time.'
+            }), 409
 
-        # Notify guest that request is pending
-        send_guest_pending(pending_meetings[token])
+        send_owner_notification(token, meeting)
+        send_guest_pending(meeting)
 
         print(f"✅ Meeting request stored [{token}] for {name}")
         return jsonify({'status': 'ok'})
@@ -470,7 +474,7 @@ def schedule():
 
 @app.route('/meeting/confirm/<token>')
 def confirm_meeting(token):
-    meeting = pending_meetings.get(token)
+    meeting = get_meeting(token)
 
     if not meeting:
         return _response_page("❌ Invalid or Expired Link",
@@ -480,15 +484,12 @@ def confirm_meeting(token):
         return _response_page("ℹ️ Already Processed",
             f"This meeting has already been {meeting.get('status')}.", "#e3f2fd", "#1565c0")
 
-    meeting['status'] = 'confirmed'
+    update_meeting_status(token, 'confirmed')
 
-    # Build Google Meet link (opens calendar with Meet pre-selected)
     meet_url = make_google_meet_link(
         meeting['date'], meeting['time'], meeting['duration'],
         meeting['topic'], [OWNER_EMAIL, meeting['email']]
     )
-
-    # Build ICS
     ics_data = make_ics(
         meeting['topic'], meeting['date'], meeting['time'],
         meeting['duration'], OWNER_EMAIL,
@@ -510,7 +511,7 @@ def confirm_meeting(token):
 
 @app.route('/meeting/decline/<token>')
 def decline_meeting(token):
-    meeting = pending_meetings.get(token)
+    meeting = get_meeting(token)
 
     if not meeting:
         return _response_page("❌ Invalid or Expired Link",
@@ -520,7 +521,7 @@ def decline_meeting(token):
         return _response_page("ℹ️ Already Processed",
             f"This meeting has already been {meeting.get('status')}.", "#e3f2fd", "#1565c0")
 
-    meeting['status'] = 'declined'
+    update_meeting_status(token, 'declined')
 
     try:
         send_declined_email(meeting)
@@ -535,6 +536,99 @@ def decline_meeting(token):
     )
 
 
+# -------------------------------
+# 5. AVAILABILITY API
+# -------------------------------
+@app.route('/api/availability', methods=['GET'])
+def availability():
+    date = request.args.get('date', '')
+    if not date:
+        return jsonify({'error': 'date required'}), 400
+
+    booked  = get_booked_slots(date)
+    blocked = get_blocked_dates()
+
+    day_blocked = any(
+        b['date'] == date and b['time_from'] is None
+        for b in blocked
+    )
+    range_blocks = [
+        {'from': b['time_from'], 'to': b['time_to']}
+        for b in blocked
+        if b['date'] == date and b['time_from'] is not None
+    ]
+
+    return jsonify({
+        'date':         date,
+        'day_blocked':  day_blocked,
+        'range_blocks': range_blocks,
+        'booked_slots': [s['time'] for s in booked],
+    })
+
+
+@app.route('/api/blocked-month', methods=['GET'])
+def blocked_month():
+    try:
+        year  = int(request.args.get('year'))
+        month = int(request.args.get('month'))
+    except (TypeError, ValueError):
+        return jsonify({'error': 'year and month required'}), 400
+
+    blocks = get_blocked_for_month(year, month)
+    return jsonify({'blocks': blocks})
+
+
+# -------------------------------
+# 6. ADMIN ROUTES
+# -------------------------------
+@app.route('/admin/block', methods=['POST'])
+def admin_block():
+    data = request.get_json()
+    if data.get('key') != ADMIN_KEY:
+        return jsonify({'error': 'unauthorised'}), 403
+
+    date      = data.get('date', '').strip()
+    time_from = data.get('time_from') or None
+    time_to   = data.get('time_to')   or None
+    reason    = data.get('reason', '')
+
+    if not date:
+        return jsonify({'error': 'date required'}), 400
+
+    block_date(date, time_from, time_to, reason)
+    label = f"{date} {time_from}–{time_to}" if time_from else f"{date} (whole day)"
+    print(f"🔒 Blocked: {label}  reason={reason}")
+    return jsonify({'status': 'blocked', 'date': date})
+
+
+@app.route('/admin/unblock', methods=['POST'])
+def admin_unblock():
+    data = request.get_json()
+    if data.get('key') != ADMIN_KEY:
+        return jsonify({'error': 'unauthorised'}), 403
+
+    date      = data.get('date', '').strip()
+    time_from = data.get('time_from') or None
+    time_to   = data.get('time_to')   or None
+
+    if not date:
+        return jsonify({'error': 'date required'}), 400
+
+    unblock_date(date, time_from, time_to)
+    print(f"🔓 Unblocked: {date}")
+    return jsonify({'status': 'unblocked', 'date': date})
+
+
+@app.route('/admin/blocked', methods=['GET'])
+def admin_list_blocked():
+    if request.args.get('key') != ADMIN_KEY:
+        return jsonify({'error': 'unauthorised'}), 403
+    return jsonify({'blocked': get_blocked_dates()})
+
+
+# -------------------------------
+# 7. RESPONSE PAGE HELPER
+# -------------------------------
 def _response_page(title, message, bg, color):
     return f"""
     <!DOCTYPE html>
@@ -571,8 +665,9 @@ def _response_page(title, message, bg, color):
     </html>
     """
 
+
 # -------------------------------
-# 5. RUN  ← always last
+# 8. RUN
 # -------------------------------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)
