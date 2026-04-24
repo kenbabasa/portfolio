@@ -377,60 +377,6 @@ checkbox.addEventListener('change', () => {
         var mo      = pad(selectedDate.getMonth() + 1);
         var dy      = pad(selectedDate.getDate());
         var dateStr = y + '-' + mo + '-' + dy;
-        var dtStart = dateStr.replace(/-/g, '') + 'T' + selectedTime.replace(':', '') + '00';
-
-        function addMins(ds, ts, m) {
-            var dt = new Date(ds + 'T' + ts + ':00');
-            dt.setMinutes(dt.getMinutes() + parseInt(m));
-            return dt.getFullYear() + '' + pad(dt.getMonth() + 1) + '' + pad(dt.getDate()) +
-                'T' + pad(dt.getHours()) + '' + pad(dt.getMinutes()) + '00';
-        }
-        function addMinsISO(ds, ts, m) {
-            var dt = new Date(ds + 'T' + ts + ':00');
-            dt.setMinutes(dt.getMinutes() + parseInt(m));
-            return dt.toISOString().slice(0, 16);
-        }
-
-        var dtEnd    = addMins(dateStr, selectedTime, dur);
-        var dtEndISO = addMinsISO(dateStr, selectedTime, dur);
-        var enc      = encodeURIComponent;
-        var desc     = "Scheduled via Kennie's portfolio. Guest: " + name + (email ? ' (' + email + ')' : '');
-
-        // Google Calendar link
-        document.getElementById('gcalLink').href =
-            'https://calendar.google.com/calendar/render?action=TEMPLATE' +
-            '&text=' + enc(topic) +
-            '&dates=' + dtStart + '/' + dtEnd +
-            '&details=' + enc(desc) +
-            '&location=' + enc('Google Meet / To be confirmed') +
-            '&add=' + enc('kennieangelo.estrellon_cyn@isu.edu.ph');
-
-        // Outlook Calendar link
-        document.getElementById('outlookLink').href =
-            'https://outlook.live.com/calendar/0/deeplink/compose?subject=' + enc(topic) +
-            '&startdt=' + dateStr + 'T' + selectedTime + ':00' +
-            '&enddt=' + dtEndISO +
-            '&body=' + enc(desc) +
-            '&path=%2Fcalendar%2Faction%2Fcompose';
-
-        // Apple / iCal download
-        var ics = [
-            'BEGIN:VCALENDAR',
-            'VERSION:2.0',
-            'PRODID:-//Kennie Portfolio//EN',
-            'BEGIN:VEVENT',
-            'DTSTART:' + dtStart,
-            'DTEND:' + dtEnd,
-            'SUMMARY:' + topic,
-            'DESCRIPTION:' + desc,
-            'LOCATION:To be confirmed',
-            'ORGANIZER;CN=Kennie Angelo Estrellon:MAILTO:kennieangelo.estrellon_cyn@isu.edu.ph',
-            'ATTENDEE;CN=' + name + ':MAILTO:' + email,
-            'END:VEVENT',
-            'END:VCALENDAR'
-        ].join('\r\n');
-        document.getElementById('icsLink').href =
-            URL.createObjectURL(new Blob([ics], { type: 'text/calendar' }));
 
         // Summary display
         var h           = parseInt(selectedTime.split(':')[0]);
