@@ -683,13 +683,13 @@ input:checked+.slider {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    max-width: 75%;   /* control width HERE */
+    max-width: 75%;  
 }
 
 .message.bot .msg-text {
     background: var(--hover-bg);
     padding: 12px 16px;
-    width: fit-content;          /* remove max-width here */
+    width: fit-content;      
     display: inline-block;
     font-size: 13.5px;
     line-height: 1.5;
@@ -700,7 +700,7 @@ input:checked+.slider {
     background: var(--text-color);
     color: var(--bg-color);
     padding: 12px 16px;
-    max-width: 75%;              /* match bot-content width */
+    max-width: 75%;           
     width: fit-content;
     font-size: 13.5px;
     line-height: 1.5;

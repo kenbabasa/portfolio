@@ -65,7 +65,7 @@ retriever = vectorstore.as_retriever(
     search_type="mmr", search_kwargs={"k": 4, "fetch_k": 10}
 )
 
-llm = OllamaLLM(model="llama3.2:1b-instruct-q4_K_M")
+llm = OllamaLLM(model="llama3.2:3b-instruct-q4_K_M")
 print("AI Ready!")
 
 # Init SQLite database (creates meetings.db automatically on first run)
@@ -88,19 +88,28 @@ def route_query(query: str) -> str:
 
 def ask_llm(prompt): return llm.invoke(prompt)
 
-def rag_answer(user_message, context):
-    return ask_llm(f"""You are Kennie Angelo R. Estrellon.
-Answer in first person. Be natural, friendly, and concise (2–3 sentences max).
-Context:\n{context}\nQuestion:\n{user_message}\nAnswer:""")
+def rag_answer(user_message, context, history=""):
+    return ask_llm(f"""You are an AI assistant on Kennie's portfolio website. Answer for visitors on Kennie's behalf.
+RULES: No foreign words. No greetings like "Kia ika" or "Konnichiwa". Max 2-3 sentences. No filler phrases.
+{f"Conversation so far:{history}" if history else ""}
+Context about Kennie: {context}
+Visitor: {user_message}
+Reply:""")
 
-def llm_answer(user_message):
-    return ask_llm(f"""You are Kennie's personal portfolio assistant.
-Answer naturally in first person. Be helpful and concise.\nQuestion:\n{user_message}""")
+def llm_answer(user_message, history=""):
+    return ask_llm(f"""You are an AI assistant on Kennie's portfolio website.
+RULES: Respond in plain English only. Max 2-3 sentences. No foreign greetings. No excessive enthusiasm.
+{f"Conversation so far:{history}" if history else ""}
+Visitor: {user_message}
+Reply:""")
 
-def hybrid_answer(user_message, context):
-    return ask_llm(f"""You are Kennie's AI assistant.
-Use context if helpful, but rely on your own knowledge when needed.
-Context:\n{context}\nQuestion:\n{user_message}""")
+def hybrid_answer(user_message, context, history=""):
+    return ask_llm(f"""You are an AI assistant on Kennie's portfolio website.
+RULES: Plain English only. Max 2-3 sentences. Be direct and helpful.
+{f"Conversation so far:{history}" if history else ""}
+Context: {context}
+Visitor: {user_message}
+Reply:""")
 
 # -------------------------------
 # 3. EMAIL HELPERS
