@@ -47,7 +47,6 @@ body {
 .profile-image {
     width: 160px;
     height: 160px;
-    border-radius: 12px;
     object-fit: cover;
     flex-shrink: 0;
 }
@@ -317,7 +316,6 @@ input:checked+.slider {
     background: transparent;
     padding: 4px 10px;
     border: 1px solid var(--border-color);
-    border-radius: 4px;
     font-family: monospace;
     text-decoration: none;
     transition: all 0.2s ease;
@@ -361,7 +359,6 @@ input:checked+.slider {
     width: 14px;
     height: 14px;
     border: 2px solid var(--text-color);
-    border-radius: 3px;
     flex-shrink: 0;
     margin-top: 3px;
     background: transparent;
@@ -686,14 +683,13 @@ input:checked+.slider {
     display: flex;
     flex-direction: column;
     gap: 4px;
-    max-width: 85%;
+    max-width: 75%;   /* control width HERE */
 }
 
 .message.bot .msg-text {
     background: var(--hover-bg);
     padding: 12px 16px;
-    max-width: 100%;
-    width: fit-content;
+    width: fit-content;          /* remove max-width here */
     display: inline-block;
     font-size: 13.5px;
     line-height: 1.5;
@@ -704,7 +700,7 @@ input:checked+.slider {
     background: var(--text-color);
     color: var(--bg-color);
     padding: 12px 16px;
-    max-width: 85%;
+    max-width: 75%;              /* match bot-content width */
     width: fit-content;
     font-size: 13.5px;
     line-height: 1.5;
@@ -1257,4 +1253,4 @@ input:checked+.slider {
     .projects-grid {
         grid-template-columns: 1fr;
     }
-}
+} 

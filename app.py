@@ -325,7 +325,7 @@ def send_confirmed_emails(meeting, meet_url, ics_data):
         msg.attach(ics_part)
         return msg
 
-    subj = f"✅ Meeting Confirmed: {meeting['topic']} — {readable_date} at {readable_time}"
+    subj = f" Meeting Confirmed: {meeting['topic']} — {readable_date} at {readable_time}"
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
         s.login(OWNER_EMAIL, GMAIL_PASS)
@@ -464,11 +464,11 @@ def schedule():
         send_owner_notification(token, meeting)
         send_guest_pending(meeting)
 
-        print(f"✅ Meeting request stored [{token}] for {name}")
+        print(f" Meeting request stored [{token}] for {name}")
         return jsonify({'status': 'ok'})
 
     except Exception as e:
-        print("❌ Schedule error:", e)
+        print(" Schedule error:", e)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -477,11 +477,11 @@ def confirm_meeting(token):
     meeting = get_meeting(token)
 
     if not meeting:
-        return _response_page("❌ Invalid or Expired Link",
+        return _response_page("Invalid or Expired Link",
             "This confirmation link is no longer valid.", "#fce4ec", "#880e4f")
 
     if meeting.get('status') != 'pending':
-        return _response_page("ℹ️ Already Processed",
+        return _response_page(" Already Processed",
             f"This meeting has already been {meeting.get('status')}.", "#e3f2fd", "#1565c0")
 
     update_meeting_status(token, 'confirmed')
@@ -498,12 +498,12 @@ def confirm_meeting(token):
 
     try:
         send_confirmed_emails(meeting, meet_url, ics_data)
-        print(f"✅ Meeting confirmed [{token}]")
+        print(f" Meeting confirmed [{token}]")
     except Exception as e:
-        print("❌ Confirm email error:", e)
+        print(f" Confirm email error:", e)
 
     return _response_page(
-        "✅ Meeting Confirmed!",
+        " Meeting Confirmed!",
         f"A confirmation email with the Google Meet link and calendar invite has been sent to <strong>{meeting['name']}</strong> ({meeting['email']}) and to you.",
         "#e8f5e9", "#2e7d32"
     )
@@ -514,20 +514,20 @@ def decline_meeting(token):
     meeting = get_meeting(token)
 
     if not meeting:
-        return _response_page("❌ Invalid or Expired Link",
+        return _response_page(" Invalid or Expired Link",
             "This link is no longer valid.", "#fce4ec", "#880e4f")
 
     if meeting.get('status') != 'pending':
-        return _response_page("ℹ️ Already Processed",
+        return _response_page("ℹ Already Processed",
             f"This meeting has already been {meeting.get('status')}.", "#e3f2fd", "#1565c0")
 
     update_meeting_status(token, 'declined')
 
     try:
         send_declined_email(meeting)
-        print(f"❌ Meeting declined [{token}]")
+        print(f" Meeting declined [{token}]")
     except Exception as e:
-        print("❌ Decline email error:", e)
+        print(f" Decline email error:", e)
 
     return _response_page(
         "Meeting Declined",
