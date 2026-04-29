@@ -1,12 +1,11 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, request, jsonify, render_template, Response, stream_with_context
 from flask_cors import CORS
 
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_community.vectorstores import FAISS
 from langchain_huggingface import HuggingFaceEmbeddings
 
-from langchain_ollama import OllamaLLM
-from langchain_core.prompts import PromptTemplate
+from groq import Groq
 
 import smtplib
 from email.mime.text import MIMEText
@@ -15,7 +14,9 @@ from email.mime.multipart import MIMEMultipart
 import os
 import uuid
 import json
+import hashlib
 from datetime import datetime, timedelta
+from concurrent.futures import ThreadPoolExecutor
 
 from database import (
     init_db, save_meeting, get_meeting,
@@ -35,9 +36,10 @@ load_dotenv()
 
 OWNER_EMAIL = os.getenv("OWNER_EMAIL")
 GMAIL_PASS  = os.getenv("GMAIL_PASS")
-ADMIN_KEY   = os.getenv("ADMIN_KEY", "lattu123")  # simple admin auth for blocking dates
+ADMIN_KEY   = os.getenv("ADMIN_KEY", "lattu123")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
-BASE_URL = 'http://127.0.0.1:5000'  # change to your public URL when deployed
+BASE_URL = 'http://127.0.0.1:5000'
 
 # -------------------------------
 # 1. INIT
@@ -62,19 +64,39 @@ else:
     vectorstore.save_local("faiss_index")
 
 retriever = vectorstore.as_retriever(
-    search_type="mmr", search_kwargs={"k": 4, "fetch_k": 10}
+    search_type="mmr",
+    search_kwargs={"k": 3, "fetch_k": 6}
 )
 
-llm = OllamaLLM(model="llama3.2:3b-instruct-q4_K_M")
+groq_client = Groq(api_key=GROQ_API_KEY)
+
 print("AI Ready!")
 
-# Init SQLite database (creates meetings.db automatically on first run)
 init_db()
 
 # -------------------------------
-# 2. RAG / ROUTING
+# 2. RESPONSE CACHE
 # -------------------------------
-def get_rag_context(query):
+response_cache: dict[str, str] = {}
+MAX_CACHE_SIZE = 200
+
+def get_cached_response(prompt: str) -> str | None:
+    key = hashlib.md5(prompt.encode()).hexdigest()
+    return response_cache.get(key)
+
+def set_cached_response(prompt: str, response: str):
+    key = hashlib.md5(prompt.encode()).hexdigest()
+    if len(response_cache) >= MAX_CACHE_SIZE:
+        oldest = next(iter(response_cache))
+        del response_cache[oldest]
+    response_cache[key] = response
+
+# -------------------------------
+# 3. RAG / ROUTING
+# -------------------------------
+def get_rag_context(query: str, mode: str) -> str:
+    if mode == "llm":
+        return ""
     docs = retriever.invoke(query)
     return "\n\n".join([d.page_content for d in docs]) if docs else ""
 
@@ -86,33 +108,33 @@ def route_query(query: str) -> str:
         return "llm"
     return "hybrid"
 
-def ask_llm(prompt): return llm.invoke(prompt)
+def build_prompt(mode: str, user_message: str, context: str, history: str = "") -> str:
+    history_block = f"\nConversation so far:\n{history}" if history else ""
 
-def rag_answer(user_message, context, history=""):
-    return ask_llm(f"""You are an AI assistant on Kennie's portfolio website. Answer for visitors on Kennie's behalf.
-RULES: No foreign words. No greetings like "Kia ika" or "Konnichiwa". Max 2-3 sentences. No filler phrases.
-{f"Conversation so far:{history}" if history else ""}
-Context about Kennie: {context}
-Visitor: {user_message}
-Reply:""")
-
-def llm_answer(user_message, history=""):
-    return ask_llm(f"""You are an AI assistant on Kennie's portfolio website.
-RULES: Respond in plain English only. Max 2-3 sentences. No foreign greetings. No excessive enthusiasm.
-{f"Conversation so far:{history}" if history else ""}
-Visitor: {user_message}
-Reply:""")
-
-def hybrid_answer(user_message, context, history=""):
-    return ask_llm(f"""You are an AI assistant on Kennie's portfolio website.
-RULES: Plain English only. Max 2-3 sentences. Be direct and helpful.
-{f"Conversation so far:{history}" if history else ""}
-Context: {context}
-Visitor: {user_message}
-Reply:""")
+    if mode == "rag":
+        return (
+            f"You are an AI assistant on Kennie's portfolio website. "
+            f"Answer for visitors on Kennie's behalf.\n"
+            f"RULES: No foreign words. Max 2-3 sentences. No filler phrases.{history_block}\n"
+            f"Context about Kennie:\n{context}\n\n"
+            f"Visitor: {user_message}\nReply:"
+        )
+    elif mode == "llm":
+        return (
+            f"You are an AI assistant on Kennie's portfolio website.\n"
+            f"RULES: Respond in plain English only. Max 1-2 sentences. No foreign greetings.{history_block}\n\n"
+            f"Visitor: {user_message}\nReply:"
+        )
+    else:  # hybrid
+        return (
+            f"You are an AI assistant on Kennie's portfolio website.\n"
+            f"RULES: Plain English only. Max 2 sentences. Be direct and helpful.{history_block}\n"
+            f"Context:\n{context}\n\n"
+            f"Visitor: {user_message}\nReply:"
+        )
 
 # -------------------------------
-# 3. EMAIL HELPERS
+# 4. EMAIL HELPERS
 # -------------------------------
 def send_email(to_addr, subject, html_body, text_body=""):
     msg = MIMEMultipart("alternative")
@@ -334,7 +356,7 @@ def send_confirmed_emails(meeting, meet_url, ics_data):
         msg.attach(ics_part)
         return msg
 
-    subj = f" Meeting Confirmed: {meeting['topic']} — {readable_date} at {readable_time}"
+    subj = f"✅ Meeting Confirmed: {meeting['topic']} — {readable_date} at {readable_time}"
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as s:
         s.login(OWNER_EMAIL, GMAIL_PASS)
@@ -395,7 +417,7 @@ def send_declined_email(meeting):
 
 
 # -------------------------------
-# 4. ROUTES
+# 5. ROUTES
 # -------------------------------
 first_message = True
 
@@ -411,26 +433,57 @@ def techstack():
 def certifications():
     return render_template('certifications.html')
 
+
 @app.route('/chat', methods=['POST'])
 def chat():
     global first_message
     try:
         data         = request.get_json()
         user_message = (data.get("message") or data.get("query") or "").strip()
+
         if not user_message:
             return jsonify({"reply": "Please type something."}), 400
+
+        # Instant first-message greeting — zero LLM cost
         if first_message:
             first_message = False
-            return jsonify({"reply": "Hey there! 👋 I'm Kennie. Ask me anything about my projects or skills 🚀"})
+            return jsonify({"reply": "Hey there! 👋 I hope you're doing great! How can I help you today?"})
+
         mode    = route_query(user_message)
-        context = get_rag_context(user_message)
-        if mode == "rag":
-            reply = rag_answer(user_message, context)
-        elif mode == "llm":
-            reply = llm_answer(user_message)
-        else:
-            reply = hybrid_answer(user_message, context)
-        return jsonify({"reply": reply})
+        context = get_rag_context(user_message, mode)
+        prompt  = build_prompt(mode, user_message, context)
+
+        # Return cached response if available
+        cached = get_cached_response(prompt)
+        if cached:
+            return jsonify({"reply": cached})
+
+        # Groq streaming
+        def generate():
+            full_response = []
+            try:
+                stream = groq_client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=[
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7,
+                    stream=True
+                )
+                for chunk in stream:
+                    if chunk.choices[0].delta.content:
+                        token = chunk.choices[0].delta.content
+                        full_response.append(token)
+                        yield token
+
+                set_cached_response(prompt, "".join(full_response))
+
+            except Exception as e:
+                print("Groq ERROR:", e)
+                yield "Sorry, the AI is currently unavailable. Please try again."
+
+        return Response(stream_with_context(generate()), mimetype='text/plain')
+
     except Exception as e:
         print("ERROR:", e)
         return jsonify({"reply": "Something went wrong connecting to the AI."}), 500
@@ -450,7 +503,6 @@ def schedule():
         if not all([name, email, date, time]):
             return jsonify({'status': 'error', 'message': 'Missing required fields'}), 400
 
-        # Check for conflicts before saving
         if not is_slot_available(date, time, duration):
             return jsonify({
                 'status': 'conflict',
@@ -470,14 +522,16 @@ def schedule():
                 'message': 'That slot was just taken. Please pick another time.'
             }), 409
 
-        send_owner_notification(token, meeting)
-        send_guest_pending(meeting)
+        executor = ThreadPoolExecutor(max_workers=2)
+        executor.submit(send_owner_notification, token, meeting)
+        executor.submit(send_guest_pending, meeting)
+        executor.shutdown(wait=False)
 
-        print(f" Meeting request stored [{token}] for {name}")
+        print(f"✅ Meeting request stored [{token}] for {name}")
         return jsonify({'status': 'ok'})
 
     except Exception as e:
-        print(" Schedule error:", e)
+        print("❌ Schedule error:", e)
         return jsonify({'status': 'error', 'message': str(e)}), 500
 
 
@@ -490,7 +544,7 @@ def confirm_meeting(token):
             "This confirmation link is no longer valid.", "#fce4ec", "#880e4f")
 
     if meeting.get('status') != 'pending':
-        return _response_page(" Already Processed",
+        return _response_page("⚠️ Already Processed",
             f"This meeting has already been {meeting.get('status')}.", "#e3f2fd", "#1565c0")
 
     update_meeting_status(token, 'confirmed')
@@ -507,12 +561,12 @@ def confirm_meeting(token):
 
     try:
         send_confirmed_emails(meeting, meet_url, ics_data)
-        print(f" Meeting confirmed [{token}]")
+        print(f"✅ Meeting confirmed [{token}]")
     except Exception as e:
-        print(f" Confirm email error:", e)
+        print(f"❌ Confirm email error:", e)
 
     return _response_page(
-        " Meeting Confirmed!",
+        "✅ Meeting Confirmed!",
         f"A confirmation email with the Google Meet link and calendar invite has been sent to <strong>{meeting['name']}</strong> ({meeting['email']}) and to you.",
         "#e8f5e9", "#2e7d32"
     )
@@ -523,20 +577,20 @@ def decline_meeting(token):
     meeting = get_meeting(token)
 
     if not meeting:
-        return _response_page(" Invalid or Expired Link",
+        return _response_page("❌ Invalid or Expired Link",
             "This link is no longer valid.", "#fce4ec", "#880e4f")
 
     if meeting.get('status') != 'pending':
-        return _response_page("ℹ Already Processed",
+        return _response_page("ℹ️ Already Processed",
             f"This meeting has already been {meeting.get('status')}.", "#e3f2fd", "#1565c0")
 
     update_meeting_status(token, 'declined')
 
     try:
         send_declined_email(meeting)
-        print(f" Meeting declined [{token}]")
+        print(f"✅ Meeting declined [{token}]")
     except Exception as e:
-        print(f" Decline email error:", e)
+        print(f"❌ Decline email error:", e)
 
     return _response_page(
         "Meeting Declined",
@@ -546,7 +600,7 @@ def decline_meeting(token):
 
 
 # -------------------------------
-# 5. AVAILABILITY API
+# 6. AVAILABILITY API
 # -------------------------------
 @app.route('/api/availability', methods=['GET'])
 def availability():
@@ -588,7 +642,7 @@ def blocked_month():
 
 
 # -------------------------------
-# 6. ADMIN ROUTES
+# 7. ADMIN ROUTES
 # -------------------------------
 @app.route('/admin/block', methods=['POST'])
 def admin_block():
@@ -636,7 +690,7 @@ def admin_list_blocked():
 
 
 # -------------------------------
-# 7. RESPONSE PAGE HELPER
+# 8. RESPONSE PAGE HELPER
 # -------------------------------
 def _response_page(title, message, bg, color):
     return f"""
@@ -676,7 +730,7 @@ def _response_page(title, message, bg, color):
 
 
 # -------------------------------
-# 8. RUN
+# 9. RUN
 # -------------------------------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=False)

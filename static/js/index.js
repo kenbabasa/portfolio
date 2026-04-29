@@ -23,22 +23,64 @@ async function sendMessage() {
     appendMessage(text, 'user');
     userInput.value = '';
 
+    userInput.disabled = true;
+    sendBtn.disabled   = true;
+
     const loadingDiv = appendMessage("typing", 'bot');
 
     try {
-        const response = await fetch("http://127.0.0.1:5000/chat", {
+        const response = await fetch("/chat", {  // ✅ relative URL — works on any IP
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: text })
         });
-        const data = await response.json();
-        loadingDiv.textContent = data.reply;
+
+        const contentType = response.headers.get('content-type') || '';
+
+        if (contentType.includes('text/plain')) {
+            // ✅ Streaming: render tokens live as they arrive
+            const reader  = response.body.getReader();
+            const decoder = new TextDecoder();
+            let fullText  = '';
+
+            const botBubble = swapToBotBubble(loadingDiv);
+
+            while (true) {
+                const { done, value } = await reader.read();
+                if (done) break;
+                fullText += decoder.decode(value, { stream: true });
+                botBubble.textContent = fullText;
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+
+        } else {
+            // ✅ JSON fallback: greeting message still returns JSON
+            const data = await response.json();
+            const botBubble = swapToBotBubble(loadingDiv);
+            botBubble.textContent = data.reply;
+        }
+
     } catch (error) {
-        loadingDiv.textContent = "Oops! My backend is offline. Make sure app.py is running.";
+        const botBubble = swapToBotBubble(loadingDiv);
+        botBubble.textContent = "Oops! My backend is offline. Make sure app.py is running.";
         console.error("Error:", error);
     }
 
+    userInput.disabled = false;
+    sendBtn.disabled   = false;
+    userInput.focus();
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Replaces typing indicator with a real bot bubble, returns the .msg-text element
+function swapToBotBubble(typingDiv) {
+    const msgDiv = typingDiv.closest('.message') || typingDiv.parentElement?.parentElement;
+    msgDiv.innerHTML = `
+        <img src="/static/images/ken.jpg" alt="Kennie" class="msg-avatar">
+        <div class="bot-content">
+            <div class="msg-text"></div>
+        </div>`;
+    return msgDiv.querySelector('.msg-text');
 }
 
 function appendMessage(text, side) {
@@ -68,7 +110,7 @@ function appendMessage(text, side) {
 
     chatMessages.appendChild(msgDiv);
     chatMessages.scrollTop = chatMessages.scrollHeight;
-    return msgDiv.querySelector('.msg-text, .typing-indicator') || msgDiv;
+    return msgDiv.querySelector('.typing-indicator') || msgDiv.querySelector('.msg-text') || msgDiv;
 }
 
 sendBtn.addEventListener('click', sendMessage);
@@ -129,14 +171,13 @@ checkbox.addEventListener('change', () => {
     var SLOTS  = ['09:00','09:30','10:00','10:30','11:00','11:30',
                   '13:00','13:30','14:00','14:30','15:00','15:30','16:00','16:30','17:00'];
 
-    // ── Availability caches ────────────────────────────────────
-    var availabilityCache = {};   // keyed by "YYYY-MM-DD"
-    var blockedMonthCache = {};   // keyed by "YYYY-MM"
+    var availabilityCache = {};
+    var blockedMonthCache = {};
 
     async function fetchAvailability(date) {
         if (availabilityCache[date]) return availabilityCache[date];
         try {
-            const res  = await fetch(`http://127.0.0.1:5000/api/availability?date=${date}`);
+            const res  = await fetch(`/api/availability?date=${date}`);  // ✅ relative URL
             const data = await res.json();
             availabilityCache[date] = data;
             return data;
@@ -149,7 +190,7 @@ checkbox.addEventListener('change', () => {
         var key = year + '-' + String(month + 1).padStart(2, '0');
         if (blockedMonthCache[key]) return blockedMonthCache[key];
         try {
-            const res  = await fetch(`http://127.0.0.1:5000/api/blocked-month?year=${year}&month=${month + 1}`);
+            const res  = await fetch(`/api/blocked-month?year=${year}&month=${month + 1}`);  // ✅ relative URL
             const data = await res.json();
             blockedMonthCache[key] = data.blocks || [];
             return blockedMonthCache[key];
@@ -158,20 +199,17 @@ checkbox.addEventListener('change', () => {
         }
     }
 
-    // ── Helper: minutes since midnight ────────────────────────
     function toMin(timeStr) {
         var p = timeStr.split(':');
         return parseInt(p[0]) * 60 + parseInt(p[1]);
     }
 
-    // ── Timezone label ─────────────────────────────────────────
     var tz      = Intl.DateTimeFormat().resolvedOptions().timeZone;
     var tzTime  = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
     var tzLabel = tz + ' (' + tzTime + ')';
     document.getElementById('calTzLabel').textContent  = tzLabel;
     document.getElementById('calTzLabel2').textContent = tzLabel;
 
-    // ── Show/hide steps ────────────────────────────────────────
     function showOnly(el) {
         [step1, step1b, step2, step3].forEach(function (s) { s.style.display = 'none'; });
         el.style.display = 'block';
@@ -187,7 +225,7 @@ checkbox.addEventListener('change', () => {
         availabilityCache = {};
         renderCalendar();
         showOnly(step1);
-        modal.style.display       = 'flex';
+        modal.style.display          = 'flex';
         document.body.style.overflow = 'hidden';
     }
 
@@ -200,7 +238,6 @@ checkbox.addEventListener('change', () => {
     closeBtn.addEventListener('click', closeModal);
     modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
 
-    // ── Calendar render (async — marks blocked days) ───────────
     async function renderCalendar() {
         document.getElementById('calMonthLabel').textContent = MONTHS[curMonth] + ' ' + curYear;
         var tbody = document.getElementById('calBody');
@@ -214,8 +251,7 @@ checkbox.addEventListener('change', () => {
         for (var d = 1; d <= days; d++) cells.push(d);
         while (cells.length % 7 !== 0) cells.push(null);
 
-        // Fetch whole-month blocked info first so whole days can be greyed
-        var monthBlocks    = await fetchBlockedMonth(curYear, curMonth);
+        var monthBlocks     = await fetchBlockedMonth(curYear, curMonth);
         var wholeDayBlocked = new Set(
             monthBlocks
                 .filter(function (b) { return b.time_from == null; })
@@ -228,12 +264,12 @@ checkbox.addEventListener('change', () => {
                 var td  = document.createElement('td');
                 var day = cells[r * 7 + c];
                 if (day) {
-                    var btn       = document.createElement('button');
-                    btn.className = 'cal-day';
+                    var btn         = document.createElement('button');
+                    btn.className   = 'cal-day';
                     btn.textContent = day;
 
-                    var pad     = function (n) { return String(n).padStart(2, '0'); };
-                    var dateStr = curYear + '-' + pad(curMonth + 1) + '-' + pad(day);
+                    var pad      = function (n) { return String(n).padStart(2, '0'); };
+                    var dateStr  = curYear + '-' + pad(curMonth + 1) + '-' + pad(day);
                     var thisDate = new Date(curYear, curMonth, day);
                     thisDate.setHours(0, 0, 0, 0);
 
@@ -243,7 +279,7 @@ checkbox.addEventListener('change', () => {
                     if (isPast || isBlocked) {
                         btn.disabled = true;
                         if (isBlocked) {
-                            btn.title               = 'Not available';
+                            btn.title                = 'Not available';
                             btn.style.textDecoration = 'line-through';
                             btn.style.opacity        = '0.35';
                         }
@@ -259,7 +295,7 @@ checkbox.addEventListener('change', () => {
                             btn.addEventListener('click', function () {
                                 selectedDate = new Date(y, m, dy);
                                 selectedTime = null;
-                                delete availabilityCache[ds]; // refresh on pick
+                                delete availabilityCache[ds];
                                 renderCalendar();
                                 renderTimeSlots();
                                 showOnly(step1b);
@@ -274,7 +310,6 @@ checkbox.addEventListener('change', () => {
         }
     }
 
-    // Month nav — clear cache when changing months
     document.getElementById('calPrev').addEventListener('click', function () {
         curMonth--;
         if (curMonth < 0) { curMonth = 11; curYear--; }
@@ -288,13 +323,12 @@ checkbox.addEventListener('change', () => {
         renderCalendar();
     });
 
-    // ── Time slots render (async — greys booked/blocked slots) ─
     async function renderTimeSlots() {
-        var pad     = function (n) { return String(n).padStart(2, '0'); };
-        var y       = selectedDate.getFullYear();
-        var mo      = pad(selectedDate.getMonth() + 1);
-        var dy      = pad(selectedDate.getDate());
-        var ds      = y + '-' + mo + '-' + dy;
+        var pad  = function (n) { return String(n).padStart(2, '0'); };
+        var y    = selectedDate.getFullYear();
+        var mo   = pad(selectedDate.getMonth() + 1);
+        var dy   = pad(selectedDate.getDate());
+        var ds   = y + '-' + mo + '-' + dy;
 
         var label = selectedDate.toLocaleDateString('en-PH', { weekday: 'long', month: 'long', day: 'numeric' });
         document.getElementById('backToCalLabel').textContent = label;
@@ -315,18 +349,16 @@ checkbox.addEventListener('change', () => {
             var mn        = parts[1];
             btn.textContent = (h % 12 || 12) + ':' + mn + ' ' + (h >= 12 ? 'PM' : 'AM');
 
-            var slotStart    = toMin(slot);
-            var slotEnd      = slotStart + dur;
+            var slotStart     = toMin(slot);
+            var slotEnd       = slotStart + dur;
             var isUnavailable = false;
 
-            // Check if overlaps with any pending/confirmed booking
             avail.booked_slots.forEach(function (bs) {
                 var bStart = toMin(bs);
                 var bEnd   = bStart + dur;
                 if (slotStart < bEnd && slotEnd > bStart) isUnavailable = true;
             });
 
-            // Check if overlaps with any owner range-block
             avail.range_blocks.forEach(function (rb) {
                 var bStart = toMin(rb.from);
                 var bEnd   = toMin(rb.to);
@@ -334,10 +366,10 @@ checkbox.addEventListener('change', () => {
             });
 
             if (isUnavailable) {
-                btn.disabled                = true;
-                btn.style.opacity           = '0.35';
-                btn.style.textDecoration    = 'line-through';
-                btn.title                   = 'Already booked';
+                btn.disabled             = true;
+                btn.style.opacity        = '0.35';
+                btn.style.textDecoration = 'line-through';
+                btn.title                = 'Already booked';
             } else {
                 if (selectedTime === slot) btn.classList.add('selected');
                 btn.addEventListener('click', function () {
@@ -353,16 +385,13 @@ checkbox.addEventListener('change', () => {
     document.getElementById('backToCalendar').addEventListener('click', function () { showOnly(step1); });
     document.getElementById('backToTime').addEventListener('click', function () { showOnly(step1b); });
 
-    // Duration label sync
     var schedDur = document.getElementById('schedDur');
     document.getElementById('sched-dur-label').textContent = schedDur.options[schedDur.selectedIndex].text;
     schedDur.addEventListener('change', function () {
         document.getElementById('sched-dur-label').textContent = this.options[this.selectedIndex].text;
-        // Refresh slots when duration changes so greyed slots recalculate
         if (selectedDate) renderTimeSlots();
     });
 
-    // ── Confirm button ─────────────────────────────────────────
     document.getElementById('schedConfirmBtn').addEventListener('click', function () {
         var name  = document.getElementById('schedName').value.trim();
         var email = document.getElementById('schedEmail').value.trim();
@@ -378,9 +407,8 @@ checkbox.addEventListener('change', () => {
         var dy      = pad(selectedDate.getDate());
         var dateStr = y + '-' + mo + '-' + dy;
 
-        // Summary display
-        var h           = parseInt(selectedTime.split(':')[0]);
-        var mn          = selectedTime.split(':')[1];
+        var h            = parseInt(selectedTime.split(':')[0]);
+        var mn           = selectedTime.split(':')[1];
         var readableDate = selectedDate.toLocaleDateString('en-PH', {
             weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
         });
@@ -389,8 +417,7 @@ checkbox.addEventListener('change', () => {
             readableDate + ' at ' + (h % 12 || 12) + ':' + mn + ' ' + (h >= 12 ? 'PM' : 'AM') +
             ' (' + dur + ' min)<br>Guest: ' + name;
 
-        // Notify backend — handle conflict response
-        fetch('http://127.0.0.1:5000/schedule', {
+        fetch('/schedule', {  // ✅ relative URL
             method:  'POST',
             headers: { 'Content-Type': 'application/json' },
             body:    JSON.stringify({
@@ -401,14 +428,12 @@ checkbox.addEventListener('change', () => {
             if (res.status === 409) {
                 var data = await res.json();
                 alert('⚠️ ' + (data.message || 'Time slot no longer available. Please pick another.'));
-                // Kick back to time picker with a fresh slot list
                 delete availabilityCache[dateStr];
                 renderTimeSlots();
                 showOnly(step1b);
             }
-            // 200 OK — already on step3, nothing extra needed
         }).catch(function () {
-            // Backend offline — silently ignore, guest already sees step3
+            // Backend offline — guest already sees step3
         });
 
         showOnly(step3);
